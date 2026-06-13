@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Bell, Clock, KeyRound, Palette, ShieldCheck, User, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useTheme } from "../hooks/useTheme";
 import { cn } from "../utils/cn";
 
-const container = {
+const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -15,7 +15,7 @@ const container = {
   },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
 };
