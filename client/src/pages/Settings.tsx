@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Clock, KeyRound, Palette, ShieldCheck, User, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
+import { Bell, KeyRound, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 import { Button } from "../components/ui/Button";
@@ -233,7 +233,7 @@ const Settings = () => {
                       ] as const).map(t => (
                         <button
                           key={t.id}
-                          onClick={() => setTheme(t.id as any)}
+                          onClick={() => setTheme(t.id as "light" | "dark" | "system")}
                           className={cn(
                             "flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-all",
                             theme === t.id ? "bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
