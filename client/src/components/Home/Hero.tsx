@@ -57,7 +57,7 @@ function FloatingCard({
   const { delay, duration, ...styleProps } = position;
   return (
     <motion.div
-      className="absolute flex items-center justify-center h-12 w-12 rounded-2xl border border-white/40 cursor-default select-none"
+      className="absolute hidden h-12 w-12 cursor-default select-none items-center justify-center rounded-2xl border border-white/40 lg:flex"
       style={{
         ...styleProps,
         background: "rgba(255,255,255,0.65)",
@@ -152,13 +152,13 @@ function GridBackground() {
 
 // ─── Ticker bar ────────────────────────────────────────────────────────────────
 const tickerItems = [
-  "🚀 Post scheduled for LinkedIn",
-  "✨ AI draft generated",
-  "📊 Engagement up 34%",
-  "🗓️ Campaign published",
-  "🔥 Trending on TikTok",
-  "✅ 18 accounts synced",
-  "⚡ Best time detected: 4:15 PM",
+  "Post scheduled for LinkedIn",
+  "AI draft generated",
+  "Engagement up 34%",
+  "Campaign published",
+  "Trending on TikTok",
+  "18 accounts synced",
+  "Best time detected: 4:15 PM",
 ];
 
 function Ticker() {
@@ -201,7 +201,7 @@ export default function SocioraHero() {
 
   return (
     <section
-      className="relative min-h-screen flex flex-col justify-center overflow-hidden"
+      className="relative flex min-h-screen flex-col justify-center overflow-hidden"
       style={{ background: "#F8FAFC", fontFamily: "'DM Sans', 'Figtree', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* Load fonts */}
@@ -256,7 +256,7 @@ export default function SocioraHero() {
       ))}
 
       {/* ── Main content ── */}
-      <div className="relative z-20 flex flex-col items-center text-center px-4 sm:px-6 pt-24 pb-16 max-w-4xl mx-auto w-full">
+      <div className="relative z-20 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-14 pt-28 text-center sm:px-6 sm:pb-16 sm:pt-24">
         <motion.div
           variants={stagger.container}
           initial="initial"
@@ -266,7 +266,7 @@ export default function SocioraHero() {
           {/* Headline */}
           <motion.h1
             variants={stagger.item}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-[82px] font-black leading-[1.01] tracking-tight text-slate-950 mb-6"
+            className="mb-5 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:mb-6 sm:text-6xl md:text-7xl lg:text-[82px]"
           >
             <span className="block">Sociora</span>
             <span className="grad-text block lg:inline">runs your content calendar.</span>
@@ -275,25 +275,25 @@ export default function SocioraHero() {
           {/* Subheadline */}
           <motion.p
             variants={stagger.item}
-            className="max-w-[700px] text-lg sm:text-xl font-medium leading-relaxed text-slate-500 mb-10"
+            className="mb-8 max-w-[700px] text-base font-medium leading-7 text-slate-500 sm:mb-10 sm:text-xl sm:leading-relaxed"
           >
             Create AI-powered content, schedule across every platform, and manage your entire social workflow from one intelligent workspace.
           </motion.p>
 
           {/* CTA */}
-          <motion.div variants={stagger.item} className="w-full max-w-md mb-4">
+          <motion.div variants={stagger.item} className="mb-4 w-full max-w-sm sm:max-w-md">
             <a
               href="/signup"
               className="btn-primary inline-flex items-center justify-center w-full rounded-2xl px-6 py-3.5 text-sm font-bold text-white no-underline"
             >
-              Get started free →
+              Get started free
             </a>
           </motion.div>
 
           {/* Secondary CTA */}
-          <motion.div variants={stagger.item} className="flex items-center gap-4 mb-14">
+          <motion.div variants={stagger.item} className="mb-10 flex w-full items-center justify-center sm:mb-14 sm:gap-4">
             <button
-              className="btn-secondary inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-5 py-2.5 text-sm font-bold text-slate-600 backdrop-blur"
+              className="btn-secondary inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-5 py-2.5 text-sm font-bold text-slate-600 backdrop-blur"
               type="button"
               aria-label="Watch demo video"
               onClick={() => setIsVideoModalOpen(true)}
@@ -305,7 +305,7 @@ export default function SocioraHero() {
               </span>
               Watch demo
             </button>
-            <span className="text-xs font-semibold text-slate-400">No credit card required</span>
+            <span className="hidden text-xs font-semibold text-slate-400 sm:inline">No credit card required</span>
           </motion.div>
 
           {/* Ticker */}
@@ -313,24 +313,6 @@ export default function SocioraHero() {
             <Ticker />
           </motion.div>
 
-          {/* Mobile social icons row */}
-          <motion.div variants={stagger.item} className="mt-10 flex lg:hidden flex-wrap justify-center gap-2">
-            {socialPlatforms.map((p) => {
-              const Icon = p.icon;
-              return (
-                <span
-                  key={p.name}
-                  className="flex items-center gap-1.5 rounded-full border border-white/60 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur"
-                  style={{ borderColor: p.color + "33" }}
-                >
-                  <span style={{ color: p.color }}>
-                    <Icon />
-                  </span>
-                  {p.name}
-                </span>
-              );
-            })}
-          </motion.div>
         </motion.div>
       </div>
 
