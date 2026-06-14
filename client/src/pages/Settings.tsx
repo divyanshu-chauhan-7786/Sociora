@@ -56,7 +56,7 @@ const Toggle = ({ checked, onChange, label, description }: { checked: boolean, o
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [name, setName] = useState("Divyanshu");
-  const [email, setEmail] = useState("divyanshu@sociora.app");
+  const [email] = useState("divyanshu@sociora.app");
   const [role, setRole] = useState("Marketing Manager");
   const [company, setCompany] = useState("Sociora");
   const [bio, setBio] = useState("");

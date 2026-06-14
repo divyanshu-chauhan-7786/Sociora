@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import {
   BarChart3,
   CalendarClock,
@@ -116,7 +116,7 @@ function GridBackground() {
 }
 
 // ─── Container Variants ────────────────────────────────────────────────────────
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -127,7 +127,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
   visible: {
     opacity: 1,
@@ -175,7 +175,7 @@ export default function Features() {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
         >
-          {features.map((feature, index) => {
+          {features.map((feature) => {
             const Icon = feature.icon;
 
             return (

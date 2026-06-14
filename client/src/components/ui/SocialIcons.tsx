@@ -1,9 +1,8 @@
-import React from "react";
 import { motion } from "framer-motion";
 
 const hoverEffect = {
   whileHover: { scale: 1.15, y: -2 },
-  transition: { type: "spring", stiffness: 400, damping: 10 }
+  transition: { type: "spring" as const, stiffness: 400, damping: 10 }
 };
 
 export const FacebookIcon = ({ className = "" }: { className?: string }) => (
@@ -43,6 +42,7 @@ export const YouTubeIcon = ({ className = "" }: { className?: string }) => (
   </motion.svg>
 );
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getRealisticIcon = (id: string, className: string) => {
   switch (id) {
     case "facebook": return <FacebookIcon className={className} />;
