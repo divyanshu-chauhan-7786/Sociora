@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Bell, Clock, KeyRound, Palette, ShieldCheck, User, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Bell, KeyRound, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useTheme } from "../hooks/useTheme";
 import { cn } from "../utils/cn";
 
-const container = {
+const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -15,9 +15,9 @@ const container = {
   },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
 };
 
 const TABS = [
@@ -56,7 +56,7 @@ const Toggle = ({ checked, onChange, label, description }: { checked: boolean, o
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [name, setName] = useState("Divyanshu");
-  const [email, setEmail] = useState("divyanshu@sociora.app");
+  const [email] = useState("divyanshu@sociora.app");
   const [role, setRole] = useState("Marketing Manager");
   const [company, setCompany] = useState("Sociora");
   const [bio, setBio] = useState("");
@@ -226,10 +226,14 @@ const Settings = () => {
                     <h3 className="text-lg font-black text-slate-950">Appearance</h3>
                     <p className="mt-1 text-sm font-medium text-slate-500">Choose how Sociora looks to you.</p>
                     <div className="mt-5 inline-flex rounded-xl bg-slate-100 p-1">
-                      {[{ id: "light", icon: Sun, label: "Light" }, { id: "dark", icon: Moon, label: "Dark" }, { id: "system", icon: Monitor, label: "System" }].map(t => (
+                      {([
+                        { id: "light", icon: Sun, label: "Light" }, 
+                        { id: "dark", icon: Moon, label: "Dark" }, 
+                        { id: "system", icon: Monitor, label: "System" }
+                      ] as const).map(t => (
                         <button
                           key={t.id}
-                          onClick={() => setTheme(t.id)}
+                          onClick={() => setTheme(t.id as "light" | "dark" | "system")}
                           className={cn(
                             "flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-all",
                             theme === t.id ? "bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"

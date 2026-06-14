@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LogOut, Settings, Sparkles, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, Settings, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 

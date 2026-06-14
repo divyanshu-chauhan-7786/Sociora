@@ -1,6 +1,6 @@
 import { CalendarClock, CheckCircle2, Layers3, UsersRound } from "lucide-react";
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 import { ActivityTimeline } from "../components/dashboard/ActivityTimeline";
 import { StatsCard } from "../components/dashboard/StatsCard";
@@ -12,7 +12,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import type { ScheduledPost } from "../types";
 import { formatSchedule } from "../utils/date";
 
-const container = {
+const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -20,9 +20,9 @@ const container = {
   },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
 };
 
 const Dashboard = () => {

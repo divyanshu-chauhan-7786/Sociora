@@ -1,16 +1,24 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Scheduler from "./pages/Scheduler";
-import Accounts from "./pages/Accounts";
-import Aicomposer from "./pages/Aicomposer";
-import Settings from "./pages/Settings";
+
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Layout = lazy(() => import("./components/Layout"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Scheduler = lazy(() => import("./pages/Scheduler"));
+const Accounts = lazy(() => import("./pages/Accounts"));
+const Aicomposer = lazy(() => import("./pages/Aicomposer"));
+const Settings = lazy(() => import("./pages/Settings"));
+
+const PageLoader = () => (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-coral-500" />
+    </div>
+);
 
 export default function App() {
     return (
-        <>
+        <Suspense fallback={<PageLoader />}>
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
@@ -23,6 +31,6 @@ export default function App() {
                 </Route>
 
             </Routes>
-        </>
+        </Suspense>
     );
 }

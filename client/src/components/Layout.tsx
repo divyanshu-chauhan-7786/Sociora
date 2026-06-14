@@ -32,7 +32,7 @@ const Layout = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.4, ease: "easeOut", css: { transitionProperty: "background-color" } }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="min-h-screen bg-[#f8fafc] text-slate-950 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-50"
     >
       <div className="flex min-h-screen">
