@@ -1,5 +1,5 @@
 import { CalendarClock, CheckCircle2, Layers3, UsersRound } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 import { ActivityTimeline } from "../components/dashboard/ActivityTimeline";
@@ -7,9 +7,8 @@ import { StatsCard } from "../components/dashboard/StatsCard";
 import { Badge } from "../components/ui/Badge";
 import { Card } from "../components/ui/Card";
 import { PlatformBadge } from "../components/ui/PlatformBadge";
-import { mockAccounts, mockActivities, mockPosts } from "../constants/mockData";
-import { useLocalStorage } from "../hooks/useLocalStorage";
-import type { ScheduledPost } from "../types";
+import { useAuth } from "../hooks/useAuth";
+import { dashboardApi, realtimeApi, type DashboardResponse } from "../lib/api";
 import { formatSchedule } from "../utils/date";
 
 const container: Variants = {
@@ -26,30 +25,89 @@ const item: Variants = {
 };
 
 const Dashboard = () => {
-  const [posts] = useLocalStorage<ScheduledPost[]>("sociora.scheduler.posts", mockPosts);
+  const { user } = useAuth();
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const stats = useMemo(
-    () => ({
-      scheduled: posts.filter((post) => post.status === "scheduled").length,
-      published: posts.filter((post) => post.status === "published").length,
-      connectedAccounts: mockAccounts.filter((account) => account.status !== "disconnected").length,
-      drafts: posts.filter((post) => post.status === "draft").length,
-    }),
-    [posts],
-  );
+  const loadDashboard = useCallback(async () => {
+    try {
+      const nextDashboard = await dashboardApi.get();
+      setDashboard(nextDashboard);
+      setError("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Dashboard failed to load");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const upcomingPosts = useMemo(
-    () =>
-      posts
-        .filter((post) => post.status === "scheduled")
-        .sort(
-          (firstPost, secondPost) =>
-            new Date(`${firstPost.scheduledDate}T${firstPost.scheduledTime}`).getTime() -
-            new Date(`${secondPost.scheduledDate}T${secondPost.scheduledTime}`).getTime(),
-        )
-        .slice(0, 3),
-    [posts],
-  );
+  useEffect(() => {
+    dashboardApi.get()
+      .then((nextDashboard) => {
+        setDashboard(nextDashboard);
+        setError("");
+      })
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Dashboard failed to load"))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const url = realtimeApi.getUrl();
+
+    if (!url) {
+      return;
+    }
+
+    const events = new EventSource(url);
+    const refresh = () => void loadDashboard();
+
+    events.addEventListener("dashboard:changed", refresh);
+    events.addEventListener("activity:changed", refresh);
+    events.onerror = () => {
+      events.close();
+    };
+
+    return () => {
+      events.removeEventListener("dashboard:changed", refresh);
+      events.removeEventListener("activity:changed", refresh);
+      events.close();
+    };
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void loadDashboard();
+    }, 20_000);
+
+    return () => window.clearInterval(interval);
+  }, [loadDashboard]);
+
+  // Show loader until real data comes through
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[50vh] w-full items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-coral-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  const getHealthColor = (health: number) => {
+    if (health >= 80) return "bg-[linear-gradient(90deg,#22c55e,#10b981)] shadow-[0_0_10px_rgba(34,197,94,0.4)]";
+    if (health >= 50) return "bg-[linear-gradient(90deg,#f59e0b,#fbbf24)] shadow-[0_0_10px_rgba(245,158,11,0.4)]";
+    return "bg-[linear-gradient(90deg,#ef4444,#f97316)] shadow-[0_0_10px_rgba(249,115,22,0.4)]";
+  };
+
+  const stats = dashboard?.stats ?? {
+    scheduled: 0,
+    published: 0,
+    connectedAccounts: 0,
+    drafts: 0,
+    failed: 0,
+    publishingHealth: 0,
+  };
+  const upcomingPosts = dashboard?.upcomingPosts ?? [];
+  const activities = dashboard?.activities ?? [];
 
   return (
     <motion.div
@@ -65,7 +123,7 @@ const Dashboard = () => {
           <div className="relative z-10">
             <Badge tone="brand" className="mb-4 shadow-sm shadow-red-500/10">AI-powered publishing</Badge>
             <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">
-              Good morning, Divyanshu.
+              Good morning, {user?.name ?? "there"}.
               <br className="hidden sm:block" /> Your content engine is ready.
             </h2>
             <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-slate-500 dark:text-slate-400">
@@ -81,25 +139,30 @@ const Dashboard = () => {
             <div>
               <p className="text-xs font-black uppercase tracking-wider text-slate-400">Publishing Health</p>
               <div className="mt-2 flex items-baseline gap-2">
-                  <p className="text-4xl font-black text-slate-950 dark:text-white">94%</p>
-                <p className="text-sm font-bold text-green-500">+2%</p>
+                  <p className="text-4xl font-black text-slate-950 dark:text-white">{stats.publishingHealth}%</p>
+                <p className="text-sm font-bold text-green-500">Live</p>
               </div>
             </div>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-600 ring-1 ring-green-500/20 shadow-inner dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/10">
               <CheckCircle2 className="h-7 w-7" />
             </div>
           </div>
-            <div className="relative z-10 mt-8 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div className="h-full w-[94%] rounded-full bg-[linear-gradient(90deg,#ef4444,#f97316)] shadow-[0_0_10px_rgba(249,115,22,0.4)]" />
+            <div className="relative z-10 mt-8 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div className={`h-full rounded-full transition-all duration-1000 ${getHealthColor(stats.publishingHealth)}`} style={{ width: `${stats.publishingHealth}%` }} />
           </div>
             <p className="relative z-10 mt-5 text-sm font-medium text-slate-500 dark:text-slate-400">
-              All channels are ready. <span className="font-bold text-red-500 dark:text-red-400">1 failed post</span> needs attention.
+              {stats.failed === 0 ? "All queued content looks healthy." : (
+                <span><span className="font-bold text-red-500 dark:text-red-400">{stats.failed} failed post{stats.failed > 1 ? "s" : ""}</span> need attention.</span>
+              )}
           </p>
           </Card>
         </motion.div>
       </section>
 
       {/* Stats Cards */}
+      {error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+      )}
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <motion.div variants={item}>
           <StatsCard
@@ -181,7 +244,7 @@ const Dashboard = () => {
         </motion.div>
 
         <motion.div variants={item} className="h-full">
-          <ActivityTimeline activities={mockActivities} />
+          <ActivityTimeline activities={activities} />
         </motion.div>
       </section>
     </motion.div>

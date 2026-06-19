@@ -1,5 +1,5 @@
 import { Plus, ShieldCheck, Signal, UsersRound } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 import { AccountGrid } from "../components/accounts/AccountGrid";
@@ -7,8 +7,7 @@ import { PlatformPickerModal } from "../components/accounts/PlatformPickerModal"
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PLATFORMS } from "../constants/platforms";
-import { mockAccounts } from "../constants/mockData";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { accountApi } from "../lib/api";
 import type { PlatformId, SocialAccount } from "../types";
 
 const container: Variants = {
@@ -25,54 +24,66 @@ const item: Variants = {
 };
 
 const Accounts = () => {
-  const [accounts, setAccounts] = useLocalStorage<SocialAccount[]>(
-    "sociora.accounts",
-    mockAccounts,
-  );
+  const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
   const [connecting, setConnecting] = useState<PlatformId | null>(null);
+  const [syncing, setSyncing] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connectedPlatform = params.get("connected");
+
+    if (connectedPlatform) {
+      setNotice(`${connectedPlatform} connected. Syncing account details...`);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    setSyncing(true);
+    accountApi.sync()
+      .then((syncedAccounts) => {
+        setAccounts(syncedAccounts);
+        if (connectedPlatform) {
+          setNotice("Account connected and synced.");
+        }
+      })
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Accounts failed to sync"))
+      .finally(() => setSyncing(false));
+  }, []);
 
   const connectedIds = useMemo(
     () => accounts.map((account) => account.platform),
     [accounts],
   );
 
-  const handleDisconnect = (accountId: string) => {
+  const handleDisconnect = async (accountId: string) => {
     const confirmed = window.confirm("Disconnect this account from Sociora?");
 
     if (!confirmed) {
       return;
     }
 
+    await accountApi.disconnect(accountId);
     setAccounts((currentAccounts) =>
       currentAccounts.filter((account) => account.id !== accountId),
     );
   };
 
-  const handleConnect = (platformId: PlatformId) => {
+  const handleConnect = async (platformId: PlatformId) => {
     setConnecting(platformId);
+    setError("");
 
-    window.setTimeout(() => {
-      setAccounts((currentAccounts) => {
-        if (currentAccounts.some((account) => account.platform === platformId)) {
-          return currentAccounts;
-        }
-
-        return [
-          ...currentAccounts,
-          {
-            id: `account-${crypto.randomUUID()}`,
-            platform: platformId,
-            handle: `${platformId}_workspace`,
-            status: "connected",
-            audience: "0",
-            lastSyncedAt: new Date().toISOString(),
-          },
-        ];
-      });
+    try {
+      // Fetch Zernio OAuth URL and log it for debugging
+      const { url } = await accountApi.getAuthUrl(platformId);
+      console.log(`Redirecting to Zernio Auth URL for ${platformId}:`, url);
+      window.location.href = url;
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Connection request failed. Please check backend server.");
+    } finally {
       setConnecting(null);
-      setShowPlatformPicker(false);
-    }, 500);
+    }
   };
 
   return (
@@ -93,6 +104,17 @@ const Accounts = () => {
           Connect account
         </Button>
       </motion.section>
+      {error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+      )}
+      {notice && !error && (
+        <p className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-700">{notice}</p>
+      )}
+      {syncing && (
+        <p className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-500">
+          Syncing connected accounts from Zernio...
+        </p>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <motion.div variants={item} className="h-full">

@@ -8,7 +8,7 @@ export type PlatformId =
   | "youtube";
 
 export type AccountStatus = "connected" | "disconnected" | "syncing";
-export type PostStatus = "scheduled" | "published" | "failed" | "draft";
+export type PostStatus = "scheduled" | "publishing" | "published" | "failed" | "draft";
 export type Tone =
   | "Professional"
   | "Casual"
@@ -31,8 +31,21 @@ export interface SocialAccount {
   id: string;
   platform: PlatformId;
   handle: string;
+  displayName: string;
+  avatarUrl: string;
+  profileUrl: string;
   status: AccountStatus;
   audience: string;
+  followerCount: number;
+  followingCount: number;
+  postCount: number;
+  zernioAccountId: string;
+  analytics?: {
+    followersLastUpdated?: string;
+    followerGrowth?: number;
+    followerGrowthPercentage?: number;
+    hasAnalyticsAccess?: boolean;
+  };
   lastSyncedAt: string;
 }
 
@@ -46,6 +59,9 @@ export interface ScheduledPost {
   createdAt: string;
   updatedAt?: string;
   publishedAt?: string;
+  publishAttemptedAt?: string;
+  publishError?: string;
+  zernioPostId?: string;
   mediaUrl?: string;
   mediaName?: string;
   mediaType?: "image" | "video";
@@ -54,7 +70,7 @@ export interface ScheduledPost {
 
 export interface ActivityItem {
   id: string;
-  type: "published" | "scheduled" | "connected" | "generated";
+  type: "published" | "scheduled" | "connected" | "generated" | "failed";
   title: string;
   description: string;
   createdAt: string;

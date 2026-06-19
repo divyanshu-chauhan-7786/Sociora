@@ -139,7 +139,7 @@ const itemVariants: Variants = {
 
 export default function Features() {
   return (
-    <section className="relative overflow-hidden bg-white py-24" id="features">
+    <section className="relative overflow-hidden bg-white py-16 sm:py-24" id="features">
       <GridBackground />
 
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 relative z-10">
@@ -151,7 +151,7 @@ export default function Features() {
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-coral-200 bg-coral-50 px-4 py-2 text-sm font-black uppercase text-coral-700"
+            className="mb-5 inline-flex items-center gap-2 rounded-full border border-coral-200 bg-coral-50 px-4 py-2 text-sm font-black uppercase text-coral-700 sm:mb-6"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -160,16 +160,16 @@ export default function Features() {
             <Layers3 className="size-4" />
             Core features
           </motion.div>
-          <h2 className="max-w-2xl text-4xl font-black leading-snug text-slate-950 sm:text-5xl">
+          <h2 className="max-w-2xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl sm:leading-snug">
             A fast, focused workspace for modern teams.
           </h2>
-          <p className="mt-6 max-w-2xl text-base font-semibold leading-7 text-slate-500">
+          <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-500 sm:mt-6 sm:text-base sm:leading-7">
             Sociora brings planning, AI writing, scheduling, and account visibility into a responsive interface built for repeat daily use.
           </p>
         </motion.div>
 
         <motion.div
-          className="mt-16 grid gap-6 xl:gap-8 md:grid-cols-2 lg:grid-cols-3"
+          className="mt-10 grid gap-4 sm:mt-16 sm:gap-6 md:grid-cols-2 xl:gap-8 lg:grid-cols-3"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -182,7 +182,7 @@ export default function Features() {
               <motion.article
                 key={feature.title}
                 variants={itemVariants}
-                className={`group relative overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-200/40 flex flex-col min-h-[400px] sm:min-h-[480px] ${feature.className || ""}`}
+                className={`group relative flex min-h-[330px] flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-200/40 backdrop-blur-xl sm:min-h-[480px] sm:rounded-[2.5rem] sm:shadow-xl ${feature.className || ""}`}
                 whileHover={{
                   y: -10,
                   scale: 1.01,
@@ -211,24 +211,24 @@ export default function Features() {
                 <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20" />
 
                 {/* Content (Top) */}
-                <div className="relative z-20 flex flex-col p-8 sm:p-10 pb-0">
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all duration-500 ease-out group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-md ${feature.accent}`}>
+                <div className="relative z-20 flex flex-col p-5 pb-0 sm:p-10 sm:pb-0">
+                  <div className="mb-3 flex items-center gap-4 sm:mb-5">
+                    <div className={`hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all duration-500 ease-out group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-md sm:flex ${feature.accent}`}>
                       <Icon className="h-7 w-7" />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-950 tracking-tight">{feature.title}</h3>
+                    <h3 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">{feature.title}</h3>
                   </div>
-                  <p className="text-base font-semibold leading-relaxed text-slate-500 group-hover:text-slate-600 transition-colors duration-300 max-w-xl">
+                  <p className="max-w-xl text-sm font-semibold leading-6 text-slate-500 transition-colors duration-300 group-hover:text-slate-600 sm:text-base sm:leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
 
                 {/* Image (Bottom) */}
-                <div className="relative z-10 mt-10 flex-1 flex items-end justify-center overflow-hidden px-6 sm:px-10 pt-6">
+                <div className="relative z-10 mt-6 flex flex-1 items-end justify-center overflow-hidden px-4 pt-4 sm:mt-10 sm:px-10 sm:pt-6">
                   <img
                     src={feature.image}
                     alt={feature.title}
-                    className="w-full h-auto object-cover object-top rounded-t-xl sm:rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] ring-1 ring-slate-900/5 transition-all duration-700 ease-out group-hover:scale-[1.05] group-hover:-translate-y-2"
+                    className="h-auto w-full rounded-t-lg object-cover object-top shadow-[0_-8px_30px_rgba(0,0,0,0.12)] ring-1 ring-slate-900/5 transition-all duration-700 ease-out group-hover:scale-[1.05] group-hover:-translate-y-2 sm:rounded-t-2xl"
                   />
                 </div>
               </motion.article>

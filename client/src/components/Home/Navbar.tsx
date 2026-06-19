@@ -2,6 +2,7 @@ import { ArrowRight, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
   { label: "Features", href: "#features" },
@@ -12,6 +13,9 @@ const navItems = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const primaryLink = user ? "/dashboard" : "/login";
+  const primaryLabel = user ? "Schedule your post" : "Launch app";
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6">
@@ -48,8 +52,6 @@ export default function Navbar() {
             >
               Sociora
             </span>
-
-            
           </div>
         </Link>
 
@@ -66,17 +68,19 @@ export default function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            className="text-sm font-bold text-slate-400 transition hover:text-white"
-            to="/login"
-          >
-            Sign in
-          </Link>
+          {!user && (
+            <Link
+              className="text-sm font-bold text-slate-400 transition hover:text-white"
+              to="/login"
+            >
+              Sign in
+            </Link>
+          )}
           <Link
             className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] px-4 text-sm font-black text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/30"
-            to="/login"
+            to={primaryLink}
           >
-            Launch app
+            {primaryLabel}
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -105,20 +109,22 @@ export default function Navbar() {
               </a>
             ))}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3">
-            <Link
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 text-sm font-black text-slate-300 hover:bg-slate-900 hover:text-white"
-              onClick={() => setIsOpen(false)}
-              to="/login"
-            >
-              Sign in
-            </Link>
+          <div className={`mt-3 grid gap-2 border-t border-slate-800 pt-3 ${user ? "grid-cols-1" : "grid-cols-2"}`}>
+            {!user && (
+              <Link
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 text-sm font-black text-slate-300 hover:bg-slate-900 hover:text-white"
+                onClick={() => setIsOpen(false)}
+                to="/login"
+              >
+                Sign in
+              </Link>
+            )}
             <Link
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] text-sm font-black text-white"
               onClick={() => setIsOpen(false)}
-              to="/login"
+              to={primaryLink}
             >
-              Launch app
+              {primaryLabel}
             </Link>
           </div>
         </div>

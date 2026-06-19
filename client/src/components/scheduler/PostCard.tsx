@@ -17,6 +17,7 @@ interface PostCardProps {
 
 const statusTone = {
   scheduled: "brand",
+  publishing: "warning",
   published: "success",
   failed: "danger",
   draft: "warning",
@@ -65,8 +66,14 @@ export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) =
       <p className="mt-2 text-xs font-medium text-slate-400">Media: {post.mediaName}</p>
     )}
 
+    {post.publishError && (
+      <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold leading-5 text-red-700">
+        {post.publishError}
+      </p>
+    )}
+
     <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-      {post.status !== "published" && onPublish && (
+      {post.status !== "published" && post.status !== "publishing" && onPublish && (
         <Button
           icon={<Rocket className="h-4 w-4" />}
           onClick={() => onPublish(post.id)}
@@ -75,7 +82,7 @@ export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) =
           Publish
         </Button>
       )}
-      {onEdit && (
+      {post.status !== "published" && post.status !== "publishing" && onEdit && (
         <Button
           icon={<Pencil className="h-4 w-4" />}
           onClick={() => onEdit(post)}
@@ -93,7 +100,7 @@ export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) =
       >
         Copy
       </Button>
-      {onDelete && (
+      {post.status !== "publishing" && onDelete && (
         <Button
           aria-label="Delete post"
           icon={<Trash2 className="h-4 w-4" />}

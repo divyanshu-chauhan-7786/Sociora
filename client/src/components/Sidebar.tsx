@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { navigationItems } from "../constants/navigation";
 import { cn } from "../utils/cn";
 import { Button } from "./ui/Button";
+import { useAuth } from "../hooks/useAuth";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -13,17 +14,14 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-const user = {
-  name: "Divyanshu",
-  email: "divyanshu@sociora.app",
-};
-
 const SidebarContent = ({
   collapsed,
   onMobileClose,
   onToggleCollapse,
-}: Omit<SidebarProps, "isMobileOpen">) => (
-  <div className="flex h-full flex-col bg-white dark:bg-slate-900 transition-colors duration-300">
+}: Omit<SidebarProps, "isMobileOpen">) => {
+  const { user, logout } = useAuth();
+  return (
+    <div className="flex h-full flex-col bg-white dark:bg-slate-900 transition-colors duration-300">
     <div className="flex min-h-20 items-center justify-between border-b border-slate-100 px-4">
       <div className="flex min-w-0 items-center gap-3">
         <AnimatePresence>
@@ -119,8 +117,12 @@ const SidebarContent = ({
 
     <div className="border-t border-slate-100 p-3">
       <div className={cn("flex items-center gap-3 rounded-lg bg-slate-50 p-3", collapsed && "justify-center")}>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
-          {user.name.charAt(0)}
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-sm font-black text-white">
+          {user?.profileImageUrl ? (
+            <img alt={`${user.name}'s profile`} className="h-full w-full object-cover" src={user.profileImageUrl} />
+          ) : (
+            user?.name.charAt(0).toUpperCase()
+          )}
         </div>
         <AnimatePresence>
           {!collapsed && (
@@ -130,8 +132,8 @@ const SidebarContent = ({
               exit={{ opacity: 0, width: 0 }}
               className="min-w-0 flex-1 overflow-hidden whitespace-nowrap"
             >
-              <p className="truncate text-sm font-black text-slate-950">{user.name}</p>
-              <p className="truncate text-xs font-semibold text-slate-500">{user.email}</p>
+              <p className="truncate text-sm font-black text-slate-950">{user?.name}</p>
+              <p className="truncate text-sm font-semibold text-slate-500">{user?.email}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -153,9 +155,7 @@ const SidebarContent = ({
             </NavLink>
             <button
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-coral-50 px-3 text-sm font-bold text-coral-700 transition hover:bg-coral-100"
-              onClick={() => {
-                window.location.href = "/";
-              }}
+              onClick={logout}
               type="button"
             >
               <LogOut className="h-4 w-4" />
@@ -175,7 +175,8 @@ const SidebarContent = ({
       </Button>
     </div>
   </div>
-);
+  );
+};
 
 const Sidebar = ({ collapsed, isMobileOpen, onMobileClose, onToggleCollapse }: SidebarProps) => (
   <>
