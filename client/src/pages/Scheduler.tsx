@@ -1,5 +1,5 @@
 import { CalendarPlus, ImagePlus, RotateCcw, Send } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 import { PlatformSelector } from "../components/scheduler/PlatformSelector";
@@ -8,13 +8,13 @@ import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { CardSkeleton } from "../components/ui/Skeleton";
-import { mockPosts } from "../constants/mockData";
-import { useLocalStorage } from "../hooks/useLocalStorage";
-import type { PlatformId, PostStatus, ScheduledPost } from "../types";
+import { accountApi, postApi, realtimeApi } from "../lib/api";
+import type { PlatformId, PostStatus, ScheduledPost, SocialAccount } from "../types";
 import { todayInputValue } from "../utils/date";
 
 const tabs: Array<{ label: string; value: PostStatus }> = [
   { label: "Scheduled", value: "scheduled" },
+  { label: "Publishing", value: "publishing" },
   { label: "Published", value: "published" },
   { label: "Failed", value: "failed" },
   { label: "Draft", value: "draft" },
@@ -34,10 +34,8 @@ const item: Variants = {
 };
 
 const Scheduler = () => {
-  const [posts, setPosts] = useLocalStorage<ScheduledPost[]>(
-    "sociora.scheduler.posts",
-    mockPosts,
-  );
+  const [posts, setPosts] = useState<ScheduledPost[]>([]);
+  const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [content, setContent] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([]);
   const [scheduledDate, setScheduledDate] = useState(todayInputValue());
@@ -46,7 +44,81 @@ const Scheduler = () => {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<PostStatus>("scheduled");
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadScheduler = useCallback(async () => {
+    try {
+      const [nextPosts, nextAccounts] = await Promise.all([
+        postApi.list(),
+        accountApi.list(),
+      ]);
+
+      setPosts(nextPosts);
+      setAccounts(nextAccounts);
+      setError("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Scheduler failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      postApi.list(),
+      accountApi.list(),
+    ])
+      .then(([nextPosts, nextAccounts]) => {
+        setPosts(nextPosts);
+        setAccounts(nextAccounts);
+        setError("");
+      })
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Scheduler failed to load"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const url = realtimeApi.getUrl();
+
+    if (!url) {
+      return;
+    }
+
+    const events = new EventSource(url);
+    const refresh = () => void loadScheduler();
+
+    events.addEventListener("posts:changed", refresh);
+    events.addEventListener("activity:changed", refresh);
+    events.onerror = () => {
+      events.close();
+    };
+
+    return () => {
+      events.removeEventListener("posts:changed", refresh);
+      events.removeEventListener("activity:changed", refresh);
+      events.close();
+    };
+  }, [loadScheduler]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void loadScheduler();
+    }, 20_000);
+
+    return () => window.clearInterval(interval);
+  }, [loadScheduler]);
+
+  const connectedPlatforms = useMemo(
+    () =>
+      Array.from(new Set(
+        accounts
+          .filter((account) => account.status === "connected")
+          .map((account) => account.platform),
+      )),
+    [accounts],
+  );
 
   const visiblePosts = useMemo(
     () =>
@@ -72,52 +144,71 @@ const Scheduler = () => {
     setEditingPostId(null);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const uploadMedia = async (file: File) => {
+    const { uploadUrl, publicUrl } = await postApi.getMediaUploadUrl({
+      filename: file.name,
+      contentType: file.type,
+    });
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Media upload failed");
+    }
+
+    return publicUrl;
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!content.trim() || selectedPlatforms.length === 0) {
+    if (
+      !content.trim() ||
+      selectedPlatforms.length === 0 ||
+      selectedPlatforms.some((platform) => !connectedPlatforms.includes(platform))
+    ) {
       return;
     }
 
-    if (editingPostId) {
-      setPosts((currentPosts) =>
-        currentPosts.map((post) =>
-          post.id === editingPostId
-            ? {
-                ...post,
-                content,
-                platforms: selectedPlatforms,
-                scheduledDate,
-                scheduledTime,
-                mediaName: mediaFile?.name ?? post.mediaName,
-                mediaType: mediaFile?.type.startsWith("video/") ? "video" : post.mediaType,
-                mediaUrl: previewUrl ?? post.mediaUrl,
-                status: "scheduled",
-                updatedAt: new Date().toISOString(),
-              }
-            : post,
-        ),
-      );
-    } else {
-      const post: ScheduledPost = {
-        id: `post-${crypto.randomUUID()}`,
+    setSaving(true);
+    setError("");
+
+    try {
+      const currentPost = posts.find((post) => post.id === editingPostId);
+      const uploadedMediaUrl = mediaFile ? await uploadMedia(mediaFile) : undefined;
+      const payload = {
         content,
         platforms: selectedPlatforms,
         scheduledDate,
         scheduledTime,
-        mediaName: mediaFile?.name,
-        mediaType: mediaFile?.type.startsWith("video/") ? "video" : mediaFile ? "image" : undefined,
-        mediaUrl: previewUrl,
-        status: "scheduled",
-        createdAt: new Date().toISOString(),
-        source: "manual",
+        mediaName: mediaFile?.name ?? currentPost?.mediaName,
+        mediaType: (mediaFile?.type.startsWith("video/") ? "video" : mediaFile ? "image" : currentPost?.mediaType) as ScheduledPost["mediaType"],
+        mediaUrl: uploadedMediaUrl ?? previewUrl ?? currentPost?.mediaUrl,
+        status: "scheduled" as const,
+        source: "manual" as const,
       };
 
-      setPosts((currentPosts) => [post, ...currentPosts]);
-    }
+      if (editingPostId) {
+        const updatedPost = await postApi.update(editingPostId, payload);
+        setPosts((currentPosts) => currentPosts.map((post) => post.id === editingPostId ? updatedPost : post));
+      } else {
+        const createdPost = await postApi.create(payload);
+        setPosts((currentPosts) => [createdPost, ...currentPosts]);
+      }
 
-    resetForm();
-    setActiveTab("scheduled");
+      resetForm();
+      setActiveTab("scheduled");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Post could not be saved");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (post: ScheduledPost) => {
@@ -130,33 +221,31 @@ const Scheduler = () => {
     document.getElementById("scheduler-composer")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleDelete = (postId: string) => {
+  const handleDelete = async (postId: string) => {
     const confirmed = window.confirm("Delete this post from the queue?");
 
     if (!confirmed) {
       return;
     }
 
+    await postApi.delete(postId);
     setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
   };
 
-  const handlePublish = (postId: string) => {
-    setPosts((currentPosts) =>
-      currentPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              status: "published",
-              publishedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          : post,
-      ),
-    );
-    setActiveTab("published");
+  const handlePublish = async (postId: string) => {
+    try {
+      const publishedPost = await postApi.publish(postId);
+      setPosts((currentPosts) => currentPosts.map((post) => post.id === postId ? publishedPost : post));
+      setActiveTab(publishedPost.status);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Post could not be published");
+    }
   };
 
-  const canSubmit = content.trim().length > 0 && selectedPlatforms.length > 0;
+  const canSubmit =
+    content.trim().length > 0 &&
+    selectedPlatforms.length > 0 &&
+    selectedPlatforms.every((platform) => connectedPlatforms.includes(platform));
 
   return (
     <motion.div 
@@ -177,9 +266,21 @@ const Scheduler = () => {
         </CardHeader>
 
         <form className="space-y-5 p-5" onSubmit={handleSubmit}>
+          {error && (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+          )}
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-800 dark:text-slate-200">Platforms</label>
-            <PlatformSelector onChange={setSelectedPlatforms} value={selectedPlatforms} />
+            <PlatformSelector
+              availablePlatforms={connectedPlatforms}
+              onChange={setSelectedPlatforms}
+              value={selectedPlatforms}
+            />
+            <p className="mt-2 text-xs font-bold text-slate-500">
+              {connectedPlatforms.length > 0
+                ? `${connectedPlatforms.length} connected channel${connectedPlatforms.length > 1 ? "s" : ""} available for real publishing.`
+                : "Connect a social account before scheduling a post."}
+            </p>
           </div>
 
           <label className="block">
@@ -264,7 +365,7 @@ const Scheduler = () => {
               icon={<CalendarPlus className="h-4 w-4" />}
               type="submit"
             >
-              {editingPostId ? "Update post" : "Schedule post"}
+              {saving ? "Saving..." : editingPostId ? "Update post" : "Schedule post"}
             </Button>
             <Button icon={<RotateCcw className="h-4 w-4" />} onClick={resetForm} variant="secondary">
               Clear
@@ -286,7 +387,7 @@ const Scheduler = () => {
         </CardHeader>
 
         <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             {tabs.map((tab) => {
               const count = posts.filter((post) => post.status === tab.value).length;
               const active = activeTab === tab.value;

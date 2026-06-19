@@ -74,7 +74,7 @@ export default function Footer() {
         >
           <motion.div className="lg:col-span-2" variants={itemVariants}>
             <Link
-              className="group mb-5 inline-flex items-center gap-3 transition-transform hover:-translate-y-0.5"
+            className="group mb-5 inline-flex items-center gap-3 transition-transform hover:-translate-y-0.5"
               onClick={() => scrollTo({ top: 0, behavior: "smooth" })}
               to="/"
             >
@@ -102,7 +102,6 @@ export default function Footer() {
                 >
                   Sociora
                 </span>
-
               </div>
             </Link>
             <p className="mb-6 max-w-sm text-sm font-semibold leading-7 text-slate-400">

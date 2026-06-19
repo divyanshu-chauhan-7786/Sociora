@@ -1,4 +1,4 @@
-import { CalendarCheck, CheckCircle2, PlugZap, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CheckCircle2, PlugZap, Sparkles } from "lucide-react";
 
 import type { ActivityItem } from "../../types";
 import { formatDateTime } from "../../utils/date";
@@ -15,6 +15,7 @@ const activityIcon = {
   scheduled: CalendarCheck,
   connected: PlugZap,
   generated: Sparkles,
+  failed: AlertTriangle,
 };
 
 export const ActivityTimeline = ({ activities }: ActivityTimelineProps) => (

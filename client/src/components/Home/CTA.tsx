@@ -2,6 +2,7 @@ import { motion, type Variants } from "framer-motion";
 import { ArrowRightIcon, CalendarCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { useAuth } from "../../hooks/useAuth";
 const containerVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: {
@@ -21,6 +22,10 @@ const itemVariants: Variants = {
 };
 
 export default function CTA() {
+  const { user } = useAuth();
+  const primaryLink = user ? "/dashboard" : "/login";
+  const primaryLabel = user ? "Schedule your post" : "Get started free";
+
   return (
     <section className="relative bg-white py-24 z-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 relative">
@@ -54,9 +59,9 @@ export default function CTA() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link
                   className="group flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] px-6 text-base font-black text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/40"
-                  to="/login"
+                  to={primaryLink}
                 >
-                  Get started free
+                  {primaryLabel}
                   <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </motion.div>

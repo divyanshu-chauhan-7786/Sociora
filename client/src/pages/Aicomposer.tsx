@@ -1,13 +1,12 @@
 import { History, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 import { ComposerPanel } from "../components/ai-composer/ComposerPanel";
 import { GenerationCard } from "../components/ai-composer/GenerationCard";
 import { SchedulePostModal } from "../components/scheduler/SchedulePostModal";
 import { EmptyState } from "../components/ui/EmptyState";
-import { mockGenerations, mockPosts } from "../constants/mockData";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { generationApi, postApi } from "../lib/api";
 import type { Generation, ScheduledPost, Tone } from "../types";
 
 const tones: Tone[] = [
@@ -32,46 +31,52 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
 };
 
-const createGeneratedContent = (prompt: string, tone: Tone) =>
-  `${tone} draft for your audience:\n\n${prompt.trim()}\n\nTurn this into a focused post with a clear hook, practical value, and a simple call to action. Sociora can refine this into platform-specific versions before publishing.`;
-
 const Aicomposer = () => {
   const [prompt, setPrompt] = useState("");
   const [tone, setTone] = useState<Tone>("Professional");
   const [generateImage, setGenerateImage] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [generations, setGenerations] = useLocalStorage<Generation[]>(
-    "sociora.ai.generations",
-    mockGenerations,
-  );
-  const [, setPosts] = useLocalStorage<ScheduledPost[]>("sociora.scheduler.posts", mockPosts);
+  const [generations, setGenerations] = useState<Generation[]>([]);
   const [activeScheduler, setActiveScheduler] = useState<Generation | null>(null);
+  const [error, setError] = useState("");
 
-  const handleGenerate = () => {
+  useEffect(() => {
+    generationApi.list()
+      .then(setGenerations)
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Generations failed to load"));
+  }, []);
+
+  const handleGenerate = async () => {
     if (!prompt.trim()) {
       return;
     }
 
     setLoading(true);
+    setError("");
 
-    window.setTimeout(() => {
-      const generated: Generation = {
-        id: `generation-${crypto.randomUUID()}`,
-        prompt,
-        content: createGeneratedContent(prompt, tone),
-        tone,
-        createdAt: new Date().toISOString(),
-        mediaUrl: generateImage ? mockGenerations[generations.length % mockGenerations.length]?.mediaUrl : undefined,
-      };
-
+    try {
+      const generated = await generationApi.create({ prompt, tone, generateImage });
       setGenerations((currentGenerations) => [generated, ...currentGenerations]);
       setPrompt("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "AI generation failed");
+    } finally {
       setLoading(false);
-    }, 650);
+    }
   };
 
-  const handleSchedule = (post: ScheduledPost) => {
-    setPosts((currentPosts) => [post, ...currentPosts]);
+  const handleSchedule = async (post: ScheduledPost) => {
+    await postApi.create({
+      content: post.content,
+      platforms: post.platforms,
+      scheduledDate: post.scheduledDate,
+      scheduledTime: post.scheduledTime,
+      status: post.status,
+      mediaUrl: post.mediaUrl,
+      mediaName: post.mediaName,
+      mediaType: post.mediaType,
+      source: "ai",
+    });
     setActiveScheduler(null);
   };
 
@@ -136,6 +141,9 @@ const Aicomposer = () => {
           </div>
         </motion.div>
       </section>
+      {error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+      )}
 
       <section>
         <motion.div variants={item} className="mb-4 flex items-center justify-between gap-4">

@@ -61,12 +61,12 @@ const Layout = () => {
                 size="icon"
                 variant="ghost"
               />
-              <div className="min-w-0 flex-1">
-                <h1 className="truncate text-xl font-black text-slate-950 dark:text-white">{meta.title}</h1>
-                <p className="mt-1 hidden text-sm font-semibold text-slate-500 sm:block">
-                  {meta.eyebrow}
-                </p>
-              </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-black text-slate-950 dark:text-white">{meta.title}</h1>
+            <p className="mt-1 hidden text-sm font-semibold text-slate-500 sm:block">
+              {meta.eyebrow}
+            </p>
+          </div>
               <div className="flex items-center gap-3">
                 <div className="hidden h-10 w-64 items-center gap-2 rounded-lg border border-slate-200 bg-[linear-gradient(135deg,#ffffff,#f0fdfa)] px-3 text-sm font-semibold text-slate-400 transition-all focus-within:border-teal-300 focus-within:ring-4 focus-within:ring-teal-100 lg:flex">
                   <Search className="h-4 w-4 shrink-0 text-teal-600" />

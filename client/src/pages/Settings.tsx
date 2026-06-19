@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, KeyRound, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useTheme } from "../hooks/useTheme";
+import { useAuth } from "../hooks/useAuth";
+import { settingsApi } from "../lib/api";
 import { cn } from "../utils/cn";
 
 const container: Variants = {
@@ -54,31 +56,123 @@ const Toggle = ({ checked, onChange, label, description }: { checked: boolean, o
 );
 
 const Settings = () => {
+  const { updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [name, setName] = useState("Divyanshu");
-  const [email] = useState("divyanshu@sociora.app");
+  const [email, setEmail] = useState("divyanshu@sociora.app");
   const [role, setRole] = useState("Marketing Manager");
   const [company, setCompany] = useState("Sociora");
   const [bio, setBio] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const { theme, setTheme } = useTheme();
   const [timezone, setTimezone] = useState("Asia/Kolkata");
-  
-  // Mock states for toggles
+  const [brandVoice, setBrandVoice] = useState("Always maintain a professional but approachable tone. Avoid buzzwords like 'synergy' or 'disrupt'. Use max 2-3 emojis per post.");
   const [urlShortening, setUrlShortening] = useState(true);
   const [approvalWorkflow, setApprovalWorkflow] = useState(false);
   const [postFailAlerts, setPostFailAlerts] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(true);
+  const [error, setError] = useState("");
 
-  const handleSaveProfile = () => {
+  useEffect(() => {
+    settingsApi.get()
+      .then((settings) => {
+        setName(settings.profile.name);
+        setEmail(settings.profile.email);
+        setRole(settings.profile.role);
+        setCompany(settings.profile.company);
+        setBio(settings.profile.bio);
+        setProfileImageUrl(settings.profile.profileImageUrl);
+        setTimezone(settings.workspace.timezone);
+        setBrandVoice(settings.workspace.brandVoice);
+        setUrlShortening(settings.workspace.publishing.urlShortening);
+        setApprovalWorkflow(settings.workspace.publishing.approvalWorkflow);
+        setPostFailAlerts(settings.workspace.notifications.postFailAlerts);
+        setWeeklyDigest(settings.workspace.notifications.weeklyDigest);
+      })
+      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Settings failed to load"));
+  }, []);
+
+  const handleSaveProfile = async () => {
     setIsSaving(true);
-    // Simulate API call delay
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const savedSettings = await settingsApi.update({
+        profile: {
+          id: "",
+          name,
+          email,
+          role,
+          company,
+          bio,
+          profileImageUrl,
+        },
+        workspace: {
+          timezone,
+          brandVoice,
+          publishing: {
+            urlShortening,
+            approvalWorkflow,
+          },
+          notifications: {
+            postFailAlerts,
+            weeklyDigest,
+          },
+        },
+      });
+
+      updateUser(savedSettings.profile);
       setIsSaving(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 3000);
-    }, 800);
+    } catch (requestError) {
+      setIsSaving(false);
+      setError(requestError instanceof Error ? requestError.message : "Settings could not be saved");
+    }
+  };
+
+  const handlePhotoChange = (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Profile photo must be 5MB or smaller.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (typeof reader.result !== "string") {
+        setError("Profile photo could not be read.");
+        return;
+      }
+
+      setIsUploadingPhoto(true);
+      setError("");
+
+      try {
+        const { profile } = await settingsApi.updateProfilePhoto(reader.result);
+        setProfileImageUrl(profile.profileImageUrl);
+        updateUser(profile);
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 3000);
+      } catch (requestError) {
+        setError(requestError instanceof Error ? requestError.message : "Profile photo could not be uploaded");
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -98,6 +192,9 @@ const Settings = () => {
         </div>
         <Button icon={<KeyRound className="h-4 w-4" />}>Invite teammate</Button>
       </motion.section>
+      {error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+      )}
 
       {/* Main Layout (Sidebar + Content) */}
       <motion.div variants={item} className="grid grid-cols-1 gap-8 md:grid-cols-[220px_1fr] lg:grid-cols-[260px_1fr]">
@@ -147,13 +244,34 @@ const Settings = () => {
                     <p className="mt-1 text-sm font-medium text-slate-500">Update your photo and personal details.</p>
 
                     <div className="mt-6 flex items-center gap-5">
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-slate-950 text-2xl font-black text-white shadow-md">
-                        {name.charAt(0).toUpperCase()}
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-2xl font-black text-white shadow-md">
+                        {profileImageUrl ? (
+                          <img alt={`${name}'s profile`} className="h-full w-full object-cover" src={profileImageUrl} />
+                        ) : (
+                          name.charAt(0).toUpperCase()
+                        )}
                       </div>
-                      <div>
-                        <Button variant="secondary" size="sm" icon={<Camera className="h-4 w-4" />}>
-                          Change photo
+                      <div className="space-y-2">
+                        <input
+                          accept="image/png,image/jpeg,image/webp"
+                          className="sr-only"
+                          onChange={(event) => {
+                            handlePhotoChange(event.target.files?.[0]);
+                            event.target.value = "";
+                          }}
+                          ref={photoInputRef}
+                          type="file"
+                        />
+                        <Button
+                          disabled={isUploadingPhoto}
+                          onClick={() => photoInputRef.current?.click()}
+                          variant="secondary"
+                          size="sm"
+                          icon={isUploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        >
+                          {isUploadingPhoto ? "Uploading..." : profileImageUrl ? "Change photo" : "Upload photo"}
                         </Button>
+                        <p className="text-xs font-semibold text-slate-500">PNG, JPG, or WEBP up to 5MB.</p>
                       </div>
                     </div>
 
@@ -262,6 +380,11 @@ const Settings = () => {
                         <option value="Australia/Sydney">Australian Eastern Time (Sydney)</option>
                       </select>
                     </div>
+                    <div className="mt-6">
+                      <Button disabled={isSaving} onClick={handleSaveProfile}>
+                        {isSaving ? "Saving..." : "Save changes"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -275,8 +398,14 @@ const Settings = () => {
                     <textarea 
                       className="mt-5 min-h-[120px] w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-100"
                       placeholder="E.g. We are a modern SaaS company. Always use 'We' instead of 'I'. Keep sentences short and punchy. Avoid using too many emojis..."
-                      defaultValue="Always maintain a professional but approachable tone. Avoid buzzwords like 'synergy' or 'disrupt'. Use max 2-3 emojis per post."
+                      onChange={(event) => setBrandVoice(event.target.value)}
+                      value={brandVoice}
                     />
+                    <div className="mt-6">
+                      <Button disabled={isSaving} onClick={handleSaveProfile}>
+                        {isSaving ? "Saving..." : "Save changes"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -302,6 +431,11 @@ const Settings = () => {
                         onChange={setApprovalWorkflow} 
                       />
                     </div>
+                    <div className="mt-6">
+                      <Button disabled={isSaving} onClick={handleSaveProfile}>
+                        {isSaving ? "Saving..." : "Save changes"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -315,6 +449,11 @@ const Settings = () => {
                     <div className="mt-6 flex flex-col gap-6">
                       <Toggle label="Post Failure Alerts" description="Get notified immediately if a post fails to publish." checked={postFailAlerts} onChange={setPostFailAlerts} />
                       <Toggle label="Weekly Digest" description="Receive a summary of your scheduled and published content every Monday." checked={weeklyDigest} onChange={setWeeklyDigest} />
+                    </div>
+                    <div className="mt-6">
+                      <Button disabled={isSaving} onClick={handleSaveProfile}>
+                        {isSaving ? "Saving..." : "Save changes"}
+                      </Button>
                     </div>
                   </div>
                 </div>
