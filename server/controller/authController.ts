@@ -11,6 +11,12 @@ const generateToken = (id: string) => {
   });
 };
 
+const PASSWORD_REQUIREMENTS_MESSAGE =
+  "Password must be at least 8 characters, start with an uppercase letter, and include a special character.";
+const PASSWORD_REQUIREMENTS_PATTERN = /^[A-Z](?=.*[^A-Za-z0-9\s]).{7,}$/;
+
+const isValidPassword = (password: string) => PASSWORD_REQUIREMENTS_PATTERN.test(password);
+
 type OAuthProvider = "google" | "microsoft" | "facebook";
 
 const clientOrigin = () => process.env.CLIENT_ORIGIN || "http://localhost:5173";
@@ -104,6 +110,11 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     if (!name?.trim() || !email?.trim() || !password) {
       res.status(400).json({ message: "Name, email, and password are required" });
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      res.status(400).json({ message: PASSWORD_REQUIREMENTS_MESSAGE });
       return;
     }
 

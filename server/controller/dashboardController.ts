@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import Account from "../models/Account.js";
 import Activity from "../models/Activity.js";
+import Generation from "../models/Generation.js";
 import Post from "../models/Post.js";
 import { presentActivity, presentPost } from "../utils/presenters.js";
 
 export const getDashboard = async (req: Request | any, res: Response): Promise<void> => {
-  const [posts, accounts, activities] = await Promise.all([
+  const [posts, accounts, aiDrafts, activities] = await Promise.all([
     Post.find({ user: req.user._id }),
     Account.find({ user: req.user._id }),
+    Generation.countDocuments({ user: req.user._id }),
     Activity.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(12),
   ]);
 
@@ -22,7 +24,7 @@ export const getDashboard = async (req: Request | any, res: Response): Promise<v
 
   const scheduled = posts.filter((post) => post.status === "scheduled");
   const failed = posts.filter((post) => post.status === "failed");
-  const connectedAccounts = accounts.filter((account) => account.status !== "disconnected").length;
+  const connectedAccounts = accounts.filter((account) => account.status === "connected").length;
   
   let health = 100;
   if (connectedAccounts === 0) health = 0; // Realistic penalty: can't publish with 0 accounts
@@ -38,6 +40,7 @@ export const getDashboard = async (req: Request | any, res: Response): Promise<v
       published: posts.filter((post) => post.status === "published").length,
       connectedAccounts,
       drafts: posts.filter((post) => post.status === "draft").length,
+      aiDrafts,
       failed: failed.length,
       publishingHealth: health,
     },

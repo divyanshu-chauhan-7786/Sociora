@@ -33,6 +33,12 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  location: {
+    type: String,
+    trim: true,
+    maxlength: 120,
+    default: "",
+  },
   status: {
     type: String,
     enum: statusValues,

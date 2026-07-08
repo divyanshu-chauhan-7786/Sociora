@@ -55,6 +55,7 @@ export interface ScheduledPost {
   platforms: PlatformId[];
   scheduledDate: string;
   scheduledTime: string;
+  location?: string;
   status: PostStatus;
   createdAt: string;
   updatedAt?: string;

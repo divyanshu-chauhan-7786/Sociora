@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, LogOut, Settings, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -6,6 +7,7 @@ import { navigationItems } from "../constants/navigation";
 import { cn } from "../utils/cn";
 import { Button } from "./ui/Button";
 import { useAuth } from "../hooks/useAuth";
+import { dashboardApi, realtimeApi, type DashboardResponse } from "../lib/api";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -20,6 +22,53 @@ const SidebarContent = ({
   onToggleCollapse,
 }: Omit<SidebarProps, "isMobileOpen">) => {
   const { user, logout } = useAuth();
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      setDashboard(await dashboardApi.get());
+    } catch {
+      // The sidebar should stay quiet if dashboard data is temporarily unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    const url = realtimeApi.getUrl();
+
+    if (!url) {
+      return;
+    }
+
+    const events = new EventSource(url);
+    const refresh = () => void loadDashboard();
+
+    events.addEventListener("dashboard:changed", refresh);
+    events.onerror = () => {
+      events.close();
+    };
+
+    return () => {
+      events.removeEventListener("dashboard:changed", refresh);
+      events.close();
+    };
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void loadDashboard();
+    }, 20_000);
+
+    return () => window.clearInterval(interval);
+  }, [loadDashboard]);
+
+  const readinessText = dashboard
+    ? `${dashboard.stats.scheduled} posts queued, ${dashboard.stats.connectedAccounts} channels healthy, ${dashboard.stats.aiDrafts} AI drafts ready for review.`
+    : "Loading live launch readiness...";
+
   return (
     <div className="flex h-full flex-col bg-white dark:bg-slate-900 transition-colors duration-300">
     <div className="flex min-h-20 items-center justify-between border-b border-slate-100 px-4">
@@ -107,8 +156,8 @@ const SidebarContent = ({
         >
           <div className="rounded-lg border border-teal-100 bg-[linear-gradient(135deg,#fff1f2,#f0fdfa_58%,#fffbeb)] p-4">
             <p className="text-sm font-black text-slate-950">Launch readiness</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-              4 posts queued, 3 channels healthy, AI drafts ready for review.
+            <p className="mt-1 text-xs font-semibold leading-5 text-slate-600" aria-live="polite">
+              {readinessText}
             </p>
           </div>
         </motion.div>

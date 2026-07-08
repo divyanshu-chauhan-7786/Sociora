@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { AuthContext } from "./auth-context";
-import { authApi, authStorage, type AuthUser } from "../lib/api";
+import { authApi, authStorage, realtimeApi, type AuthUser } from "../lib/api";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(() => authStorage.getUser());
@@ -22,6 +22,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const url = realtimeApi.getUrl();
+
+    if (!url) {
+      return;
+    }
+
+    const events = new EventSource(url);
+    const refreshUser = () => {
+      authApi.me()
+        .then(({ user: currentUser }) => {
+          authStorage.setUser(currentUser);
+          setUser(currentUser);
+        })
+        .catch(() => {
+          authStorage.clear();
+          setUser(null);
+        });
+    };
+
+    events.addEventListener("settings:changed", refreshUser);
+    events.onerror = () => {
+      events.close();
+    };
+
+    return () => {
+      events.removeEventListener("settings:changed", refreshUser);
+      events.close();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

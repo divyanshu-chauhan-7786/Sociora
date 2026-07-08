@@ -12,6 +12,7 @@ const Accounts = lazy(() => import("./pages/Accounts"));
 const Aicomposer = lazy(() => import("./pages/Aicomposer"));
 const Settings = lazy(() => import("./pages/Settings"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
+const MarketingInfo = lazy(() => import("./pages/MarketingInfo"));
 
 const PageLoader = () => (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -35,6 +36,14 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/about" element={<MarketingInfo page="about" />} />
+                <Route path="/blog" element={<MarketingInfo page="blog" />} />
+                <Route path="/careers" element={<MarketingInfo page="careers" />} />
+                <Route path="/contact" element={<MarketingInfo page="contact" />} />
+                <Route path="/privacy" element={<MarketingInfo page="privacy" />} />
+                <Route path="/terms" element={<MarketingInfo page="terms" />} />
+                <Route path="/security" element={<MarketingInfo page="security" />} />
+                <Route path="/cookies" element={<MarketingInfo page="cookies" />} />
                 <Route path="/oauth/callback" element={<OAuthCallback />} />
                 <Route element={<ProtectedRoute />}>
                     <Route element={<Layout />} >

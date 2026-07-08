@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, KeyRound, Sparkles, Send, Globe, Moon, Sun, Monitor, UserRound, Camera, Mail, Briefcase, Building2, CheckCircle2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
@@ -6,7 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useTheme } from "../hooks/useTheme";
 import { useAuth } from "../hooks/useAuth";
-import { settingsApi } from "../lib/api";
+import { realtimeApi, settingsApi, type SettingsResponse } from "../lib/api";
 import { cn } from "../utils/cn";
 
 const container: Variants = {
@@ -77,24 +77,68 @@ const Settings = () => {
   const [weeklyDigest, setWeeklyDigest] = useState(true);
   const [error, setError] = useState("");
 
+  const applySettings = useCallback((settings: SettingsResponse) => {
+    setName(settings.profile.name);
+    setEmail(settings.profile.email);
+    setRole(settings.profile.role);
+    setCompany(settings.profile.company);
+    setBio(settings.profile.bio);
+    setProfileImageUrl(settings.profile.profileImageUrl);
+    setTimezone(settings.workspace.timezone);
+    setBrandVoice(settings.workspace.brandVoice);
+    setUrlShortening(settings.workspace.publishing.urlShortening);
+    setApprovalWorkflow(settings.workspace.publishing.approvalWorkflow);
+    setPostFailAlerts(settings.workspace.notifications.postFailAlerts);
+    setWeeklyDigest(settings.workspace.notifications.weeklyDigest);
+    updateUser(settings.profile);
+    setError("");
+  }, [updateUser]);
+
+  const loadSettings = useCallback(async () => {
+    try {
+      applySettings(await settingsApi.get());
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Settings failed to load");
+    }
+  }, [applySettings]);
+
   useEffect(() => {
-    settingsApi.get()
-      .then((settings) => {
-        setName(settings.profile.name);
-        setEmail(settings.profile.email);
-        setRole(settings.profile.role);
-        setCompany(settings.profile.company);
-        setBio(settings.profile.bio);
-        setProfileImageUrl(settings.profile.profileImageUrl);
-        setTimezone(settings.workspace.timezone);
-        setBrandVoice(settings.workspace.brandVoice);
-        setUrlShortening(settings.workspace.publishing.urlShortening);
-        setApprovalWorkflow(settings.workspace.publishing.approvalWorkflow);
-        setPostFailAlerts(settings.workspace.notifications.postFailAlerts);
-        setWeeklyDigest(settings.workspace.notifications.weeklyDigest);
-      })
-      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Settings failed to load"));
-  }, []);
+    void loadSettings();
+  }, [loadSettings]);
+
+  useEffect(() => {
+    const url = realtimeApi.getUrl();
+
+    if (!url) {
+      return;
+    }
+
+    const events = new EventSource(url);
+    const refreshSettings = (event: MessageEvent<string>) => {
+      try {
+        const payload = JSON.parse(event.data) as { settings?: SettingsResponse };
+
+        if (payload.settings) {
+          applySettings(payload.settings);
+          return;
+        }
+      } catch {
+        // If the realtime payload cannot be parsed, fall back to the API.
+      }
+
+      void loadSettings();
+    };
+
+    events.addEventListener("settings:changed", refreshSettings);
+    events.onerror = () => {
+      events.close();
+    };
+
+    return () => {
+      events.removeEventListener("settings:changed", refreshSettings);
+      events.close();
+    };
+  }, [applySettings, loadSettings]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -125,7 +169,7 @@ const Settings = () => {
         },
       });
 
-      updateUser(savedSettings.profile);
+      applySettings(savedSettings);
       setIsSaving(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 3000);

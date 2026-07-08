@@ -31,6 +31,17 @@ const getZernioPostId = (response: any) =>
   response?.data?.id ||
   "";
 
+const buildPlatformSpecificData = (platform: PlatformId, location: string) => {
+  if (!location || !["instagram", "facebook"].includes(platform)) {
+    return undefined;
+  }
+
+  return {
+    location,
+    locationName: location,
+  };
+};
+
 const publishToZernio = async (post: any) => {
   if (!process.env.ZERNIO_API_KEY) {
     throw new Error("ZERNIO_API_KEY is missing. Add it to server/.env to publish to real social accounts.");
@@ -43,6 +54,7 @@ const publishToZernio = async (post: any) => {
     zernioAccountId: { $exists: true, $ne: "" },
   });
 
+  const location = post.location?.trim() ?? "";
   const targets = post.platforms.map((platform: PlatformId) => {
     const account = accounts.find((currentAccount) => currentAccount.platform === platform);
 
@@ -50,9 +62,12 @@ const publishToZernio = async (post: any) => {
       throw new Error(`No connected ${platform} account with a Zernio account ID was found.`);
     }
 
+    const platformSpecificData = buildPlatformSpecificData(platform, location);
+
     return {
       platform,
       accountId: account.zernioAccountId,
+      ...(platformSpecificData ? { platformSpecificData } : {}),
     };
   });
 
@@ -73,10 +88,12 @@ const publishToZernio = async (post: any) => {
       content: post.content,
       platforms: targets,
       publishNow: true,
+      ...(location ? { location } : {}),
       mediaItems,
       metadata: {
         socioraPostId: post._id.toString(),
         trigger: "sociora-scheduler",
+        ...(location ? { location } : {}),
       },
     },
   });

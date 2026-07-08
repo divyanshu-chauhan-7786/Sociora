@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
-  { label: "Features", href: "#features" },
-  { label: "Workflow", href: "#how-it-works" },
-  { label: "Stories", href: "#testimonials" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Features", href: "/#features" },
+  { label: "Workflow", href: "/#how-it-works" },
+  { label: "Stories", href: "/#testimonials" },
+  { label: "Pricing", href: "/#pricing" },
 ];
 
 export default function Navbar() {

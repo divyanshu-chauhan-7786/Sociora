@@ -21,6 +21,7 @@ export interface DashboardResponse {
     published: number;
     connectedAccounts: number;
     drafts: number;
+    aiDrafts: number;
     failed: number;
     publishingHealth: number;
   };
@@ -162,6 +163,8 @@ export const generationApi = {
   list: () => request<Generation[]>("/generations"),
   create: (payload: { prompt: string; tone: Tone; generateImage: boolean }) =>
     request<Generation>("/generations", { method: "POST", body: JSON.stringify(payload) }),
+  suggestHashtags: (payload: { content: string; platforms: PlatformId[] }) =>
+    request<{ hashtags: string[] }>("/generations/hashtags", { method: "POST", body: JSON.stringify(payload) }),
 };
 
 export const settingsApi = {

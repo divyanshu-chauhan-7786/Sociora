@@ -1,4 +1,4 @@
-import { CalendarPlus, ImagePlus, RotateCcw, Send } from "lucide-react";
+import { CalendarPlus, Hash, ImagePlus, Loader2, MapPin, RotateCcw, Send } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
@@ -8,7 +8,7 @@ import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { CardSkeleton } from "../components/ui/Skeleton";
-import { accountApi, postApi, realtimeApi } from "../lib/api";
+import { accountApi, generationApi, postApi, realtimeApi } from "../lib/api";
 import type { PlatformId, PostStatus, ScheduledPost, SocialAccount } from "../types";
 import { todayInputValue } from "../utils/date";
 
@@ -40,10 +40,13 @@ const Scheduler = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformId[]>([]);
   const [scheduledDate, setScheduledDate] = useState(todayInputValue());
   const [scheduledTime, setScheduledTime] = useState("09:00");
+  const [location, setLocation] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | undefined>();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<PostStatus>("scheduled");
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
+  const [generatingHashtags, setGeneratingHashtags] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -139,9 +142,11 @@ const Scheduler = () => {
     setSelectedPlatforms([]);
     setScheduledDate(todayInputValue());
     setScheduledTime("09:00");
+    setLocation("");
     setPreviewUrl(undefined);
     setMediaFile(null);
     setEditingPostId(null);
+    setHashtagSuggestions([]);
   };
 
   const uploadMedia = async (file: File) => {
@@ -187,6 +192,7 @@ const Scheduler = () => {
         platforms: selectedPlatforms,
         scheduledDate,
         scheduledTime,
+        location: location.trim(),
         mediaName: mediaFile?.name ?? currentPost?.mediaName,
         mediaType: (mediaFile?.type.startsWith("video/") ? "video" : mediaFile ? "image" : currentPost?.mediaType) as ScheduledPost["mediaType"],
         mediaUrl: uploadedMediaUrl ?? previewUrl ?? currentPost?.mediaUrl,
@@ -216,6 +222,7 @@ const Scheduler = () => {
     setSelectedPlatforms(post.platforms);
     setScheduledDate(post.scheduledDate);
     setScheduledTime(post.scheduledTime);
+    setLocation(post.location ?? "");
     setPreviewUrl(post.mediaUrl);
     setEditingPostId(post.id);
     document.getElementById("scheduler-composer")?.scrollIntoView({ behavior: "smooth" });
@@ -240,6 +247,42 @@ const Scheduler = () => {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Post could not be published");
     }
+  };
+
+  const handleGenerateHashtags = async () => {
+    if (!content.trim()) {
+      setError("Write content before generating hashtags.");
+      return;
+    }
+
+    setGeneratingHashtags(true);
+    setError("");
+
+    try {
+      const { hashtags } = await generationApi.suggestHashtags({
+        content,
+        platforms: selectedPlatforms,
+      });
+      setHashtagSuggestions(hashtags);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Hashtags could not be generated");
+    } finally {
+      setGeneratingHashtags(false);
+    }
+  };
+
+  const addHashtagToContent = (hashtag: string) => {
+    setContent((currentContent) => {
+      const existingHashtags = currentContent.match(/#[A-Za-z0-9_]+/g) ?? [];
+      const alreadyAdded = existingHashtags.some((existingHashtag) => existingHashtag.toLowerCase() === hashtag.toLowerCase());
+
+      if (alreadyAdded) {
+        return currentContent;
+      }
+
+      const nextContent = `${currentContent.trimEnd()}${currentContent.trim() ? " " : ""}${hashtag}`;
+      return nextContent.length <= 480 ? nextContent : currentContent;
+    });
   };
 
   const canSubmit =
@@ -284,6 +327,20 @@ const Scheduler = () => {
           </div>
 
           <label className="block">
+            <span className="mb-2 block text-sm font-bold text-slate-800 dark:text-slate-200">Location</span>
+            <div className="relative">
+              <MapPin className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:bg-slate-900"
+                maxLength={120}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder="Add a place for Instagram or Facebook..."
+                value={location}
+              />
+            </div>
+          </label>
+
+          <label className="block">
             <span className="mb-2 block text-sm font-bold text-slate-800 dark:text-slate-200">Content</span>
             <textarea
               className="min-h-40 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:bg-slate-900"
@@ -296,6 +353,38 @@ const Scheduler = () => {
               {content.length}/480
             </span>
           </label>
+
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Hash className="h-4 w-4 text-coral-600" />
+                <span className="text-sm font-black text-slate-800 dark:text-slate-200">Hashtag suggestions</span>
+              </div>
+              <Button
+                disabled={!content.trim() || generatingHashtags}
+                icon={generatingHashtags ? <Loader2 className="h-4 w-4 animate-spin" /> : <Hash className="h-4 w-4" />}
+                onClick={handleGenerateHashtags}
+                size="sm"
+                variant="secondary"
+              >
+                {generatingHashtags ? "Generating..." : "Suggest hashtags"}
+              </Button>
+            </div>
+            {hashtagSuggestions.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {hashtagSuggestions.map((hashtag) => (
+                  <button
+                    className="rounded-full border border-teal-200 bg-white px-3 py-1.5 text-xs font-black text-teal-700 transition hover:border-teal-300 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100 dark:border-teal-500/30 dark:bg-slate-950 dark:text-teal-300"
+                    key={hashtag}
+                    onClick={() => addHashtagToContent(hashtag)}
+                    type="button"
+                  >
+                    {hashtag}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-800 dark:text-slate-200" htmlFor="media-upload">

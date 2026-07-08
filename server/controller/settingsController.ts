@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import WorkspaceSettings from "../models/WorkspaceSettings.js";
 import { uploadToImageKit } from "../services/imageKit.js";
 import { presentUser } from "../utils/presenters.js";
+import { broadcastToUser } from "../utils/realtime.js";
 
 const defaultSettings = {
   timezone: "Asia/Kolkata",
@@ -17,55 +18,127 @@ const defaultSettings = {
   },
 };
 
-export const getSettings = async (req: Request | any, res: Response): Promise<void> => {
-  const settings = await WorkspaceSettings.findOneAndUpdate(
-    { user: req.user._id },
-    { $setOnInsert: { user: req.user._id, ...defaultSettings } },
+const getOrCreateWorkspaceSettings = (userId: string) =>
+  WorkspaceSettings.findOneAndUpdate(
+    { user: userId },
+    { $setOnInsert: { user: userId, ...defaultSettings } },
     { new: true, upsert: true, setDefaultsOnInsert: true },
   );
 
-  res.json({
-    profile: presentUser(req.user),
-    workspace: {
-      timezone: settings.timezone,
-      brandVoice: settings.brandVoice,
-      publishing: settings.publishing,
-      notifications: settings.notifications,
-    },
-  });
+const presentSettingsResponse = (user: any, settings: any) => ({
+  profile: presentUser(user),
+  workspace: {
+    timezone: settings.timezone,
+    brandVoice: settings.brandVoice,
+    publishing: settings.publishing,
+    notifications: settings.notifications,
+  },
+});
+
+export const getSettings = async (req: Request | any, res: Response): Promise<void> => {
+  const settings = await getOrCreateWorkspaceSettings(req.user._id.toString());
+  res.json(presentSettingsResponse(req.user, settings));
 };
 
 export const updateSettings = async (req: Request | any, res: Response): Promise<void> => {
   const { profile, workspace } = req.body;
 
   if (profile) {
-    await User.findByIdAndUpdate(req.user._id, {
-      $set: {
-        name: profile.name,
-        role: profile.role,
-        company: profile.company,
-        bio: profile.bio,
-      },
-    }, { runValidators: true });
+    const profileUpdates: Record<string, string> = {};
+
+    if (profile.name !== undefined) {
+      if (typeof profile.name !== "string" || !profile.name.trim()) {
+        res.status(400).json({ message: "Name is required" });
+        return;
+      }
+
+      profileUpdates.name = profile.name.trim();
+    }
+
+    for (const field of ["role", "company", "bio"] as const) {
+      if (profile[field] !== undefined) {
+        if (typeof profile[field] !== "string") {
+          res.status(400).json({ message: `${field} must be text` });
+          return;
+        }
+
+        profileUpdates[field] = profile[field].trim();
+      }
+    }
+
+    if (Object.keys(profileUpdates).length > 0) {
+      await User.findByIdAndUpdate(req.user._id, {
+        $set: profileUpdates,
+      }, { runValidators: true });
+    }
   }
 
-  await WorkspaceSettings.findOneAndUpdate(
+  const workspaceUpdates: Record<string, string | boolean> = {};
+
+  if (workspace) {
+    if (workspace.timezone !== undefined) {
+      if (typeof workspace.timezone !== "string" || !workspace.timezone.trim()) {
+        res.status(400).json({ message: "Timezone is required" });
+        return;
+      }
+
+      workspaceUpdates.timezone = workspace.timezone.trim();
+    }
+
+    if (workspace.brandVoice !== undefined) {
+      if (typeof workspace.brandVoice !== "string" || workspace.brandVoice.length > 2000) {
+        res.status(400).json({ message: "Brand voice must be text up to 2000 characters" });
+        return;
+      }
+
+      workspaceUpdates.brandVoice = workspace.brandVoice.trim();
+    }
+
+    if (workspace.publishing?.urlShortening !== undefined) {
+      workspaceUpdates["publishing.urlShortening"] = Boolean(workspace.publishing.urlShortening);
+    }
+
+    if (workspace.publishing?.approvalWorkflow !== undefined) {
+      workspaceUpdates["publishing.approvalWorkflow"] = Boolean(workspace.publishing.approvalWorkflow);
+    }
+
+    if (workspace.notifications?.postFailAlerts !== undefined) {
+      workspaceUpdates["notifications.postFailAlerts"] = Boolean(workspace.notifications.postFailAlerts);
+    }
+
+    if (workspace.notifications?.weeklyDigest !== undefined) {
+      workspaceUpdates["notifications.weeklyDigest"] = Boolean(workspace.notifications.weeklyDigest);
+    }
+  }
+
+  const settingsUpdate: Record<string, unknown> = {
+    $setOnInsert: { user: req.user._id },
+  };
+
+  if (Object.keys(workspaceUpdates).length > 0) {
+    settingsUpdate.$set = workspaceUpdates;
+  }
+
+  const settings = await WorkspaceSettings.findOneAndUpdate(
     { user: req.user._id },
-    {
-      $set: {
-        timezone: workspace?.timezone,
-        brandVoice: workspace?.brandVoice,
-        publishing: workspace?.publishing,
-        notifications: workspace?.notifications,
-      },
-      $setOnInsert: { user: req.user._id },
-    },
+    settingsUpdate,
     { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true },
   );
 
   const user = await User.findById(req.user._id).select("-password");
+
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
+
   req.user = user;
-  await getSettings(req, res);
+  const settingsResponse = presentSettingsResponse(user, settings);
+  broadcastToUser(req.user._id.toString(), "settings:changed", {
+    status: "settings-updated",
+    settings: settingsResponse,
+  });
+  res.json(settingsResponse);
 };
 
 const parseDataUrlImage = (dataUrl: string) => {
@@ -135,6 +208,12 @@ export const updateProfilePhoto = async (req: Request | any, res: Response): Pro
     res.status(404).json({ message: "User not found" });
     return;
   }
+
+  const settings = await getOrCreateWorkspaceSettings(req.user._id.toString());
+  broadcastToUser(req.user._id.toString(), "settings:changed", {
+    status: "profile-photo-updated",
+    settings: presentSettingsResponse(user, settings),
+  });
 
   res.json({ profile: presentUser(user) });
 };

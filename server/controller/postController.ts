@@ -14,6 +14,7 @@ const buildPostPayload = (body: any) => ({
   platforms: body.platforms,
   scheduledDate: body.scheduledDate,
   scheduledTime: body.scheduledTime,
+  location: body.location?.trim() ?? "",
   status: body.status ?? "scheduled",
   mediaUrl: body.mediaUrl,
   mediaName: body.mediaName,

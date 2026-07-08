@@ -1,12 +1,33 @@
 import { motion, type Variants } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const footerLinks = {
-  Product: ["Features", "Workflow", "Pricing", "Dashboard"],
-  Company: ["About", "Blog", "Careers", "Contact"],
-  Legal: ["Privacy", "Terms", "Security", "Cookies"],
+  Product: [
+    { label: "Features", to: "/#features" },
+    { label: "Workflow", to: "/#how-it-works" },
+    { label: "Pricing", to: "/#pricing" },
+    { label: "Dashboard", to: "/dashboard" },
+  ],
+  Company: [
+    { label: "About", to: "/about" },
+    { label: "Blog", to: "/blog" },
+    { label: "Careers", to: "/careers" },
+    { label: "Contact", to: "/contact" },
+  ],
+  Legal: [
+    { label: "Privacy", to: "/privacy" },
+    { label: "Terms", to: "/terms" },
+    { label: "Security", to: "/security" },
+    { label: "Cookies", to: "/cookies" },
+  ],
 };
+
+const contactDetails = [
+  { label: "team.profilex7786@gmail.com", href: "mailto:team.profilex7786@gmail.com", icon: Mail },
+  { label: "+91 8960717110", href: "tel:+918960717110", icon: Phone },
+  { label: "Noida Sector 5, Uttar Pradesh", href: "/contact", icon: MapPin },
+];
 
 // ─── GridBackground ────────────────────────────────────────────────────────────
 function GridBackground() {
@@ -105,8 +126,24 @@ export default function Footer() {
               </div>
             </Link>
             <p className="mb-6 max-w-sm text-sm font-semibold leading-7 text-slate-400">
-              The AI social media workspace for planning, generating, scheduling, and reviewing campaigns from one responsive frontend.
+              The AI social media workspace for planning, generating, scheduling, and reviewing campaigns from one responsive dashboard.
             </p>
+            <div className="mb-6 grid max-w-md gap-2">
+              {contactDetails.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    className="flex items-center gap-2 text-xs font-bold text-slate-400 transition hover:text-orange-400"
+                    key={item.label}
+                    to={item.href}
+                  >
+                    <Icon className="h-4 w-4 flex-none text-orange-400" />
+                    <span className="break-all">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-400 shadow-sm backdrop-blur-sm">
               <Sparkles className="size-3" />
               Ready to publish smarter?
@@ -120,13 +157,13 @@ export default function Footer() {
               </div>
               <ul className="space-y-2">
                 {links.map((link) => (
-                  <li key={link}>
-                    <a 
+                  <li key={link.label}>
+                    <Link
                       className="inline-block text-sm font-semibold text-slate-400 transition-all duration-200 hover:translate-x-1 hover:text-orange-400" 
-                      href="#"
+                      to={link.to}
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -145,12 +182,12 @@ export default function Footer() {
             Copyright {new Date().getFullYear()} Sociora. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-5">
-            <a className="text-xs font-bold text-slate-400 transition hover:text-orange-400" href="#">
+            <Link className="text-xs font-bold text-slate-400 transition hover:text-orange-400" to="/privacy">
               Privacy Policy
-            </a>
-            <a className="text-xs font-bold text-slate-400 transition hover:text-orange-400" href="#">
+            </Link>
+            <Link className="text-xs font-bold text-slate-400 transition hover:text-orange-400" to="/terms">
               Terms of Service
-            </a>
+            </Link>
             <Link className="text-xs font-bold text-slate-400 transition hover:text-orange-400" to="/login">
               Sign in
             </Link>
