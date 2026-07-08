@@ -15,6 +15,10 @@ interface SocialDraft {
   mediaUrl?: string;
 }
 
+interface HashtagSuggestionResponse {
+  hashtags: string[];
+}
+
 const ai = () => {
   if (!process.env.GOOGLE_API_KEY) {
     throw new Error("GOOGLE_API_KEY is missing. Add it to server/.env to enable AI Composer.");
@@ -52,7 +56,7 @@ const extractJson = (text: string) => {
   const trimmed = text.trim();
   const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const jsonText = fencedMatch?.[1] ?? trimmed;
-  return JSON.parse(jsonText) as SocialDraft;
+  return JSON.parse(jsonText);
 };
 
 const errorMessage = (error: unknown) =>
@@ -169,7 +173,7 @@ export const generateSocialDraft = async ({
     },
   });
 
-  const draft = extractJson(response.text ?? "");
+  const draft = extractJson(response.text ?? "") as SocialDraft;
 
   if (!draft.content?.trim() || !draft.imagePrompt?.trim()) {
     throw new Error("Google returned an incomplete AI draft.");
@@ -183,4 +187,88 @@ export const generateSocialDraft = async ({
     ...draft,
     mediaUrl: await generateImage(draft.imagePrompt, userId),
   };
+};
+
+const sanitizeHashtags = (hashtags: string[]) =>
+  Array.from(new Set(
+    hashtags
+      .map((hashtag) => hashtag.trim().replace(/^#+/, "").replace(/[^A-Za-z0-9_]/g, ""))
+      .filter((hashtag) => hashtag.length >= 2 && hashtag.length <= 40)
+      .map((hashtag) => `#${hashtag}`),
+  )).slice(0, 12);
+
+const fallbackHashtags = (content: string, platforms: string[]) => {
+  const stopWords = new Set([
+    "about", "after", "again", "also", "and", "are", "for", "from", "have", "into", "our", "that", "the", "this", "with", "your",
+  ]);
+  const words = content
+    .toLowerCase()
+    .match(/[a-z0-9]{4,}/g) ?? [];
+  const keywordTags = words
+    .filter((word) => !stopWords.has(word))
+    .slice(0, 8)
+    .map((word) => `#${word.charAt(0).toUpperCase()}${word.slice(1)}`);
+  const platformTags = platforms.map((platform) => `#${platform.charAt(0).toUpperCase()}${platform.slice(1)}`);
+
+  return sanitizeHashtags([...keywordTags, ...platformTags, "#SocialMedia", "#Marketing"]);
+};
+
+export const generateHashtagSuggestions = async ({
+  content,
+  platforms,
+  brandVoice,
+}: {
+  content: string;
+  platforms: string[];
+  brandVoice: string;
+}) => {
+  const baseFallback = fallbackHashtags(content, platforms);
+
+  try {
+    const response = await ai().models.generateContent({
+      model: process.env.GOOGLE_TEXT_MODEL || "gemini-2.5-flash",
+      contents: `
+You are Sociora's hashtag strategist.
+
+Suggest concise, relevant hashtags for this social post.
+
+Brand voice:
+${brandVoice}
+
+Platforms:
+${platforms.length > 0 ? platforms.join(", ") : "general social media"}
+
+Post content:
+${content}
+
+Rules:
+- Return 8 to 12 hashtags.
+- Each hashtag must start with #.
+- Use platform-aware tags where useful.
+- Avoid spammy, vague, or unrelated tags.
+- No explanations.
+`,
+      config: {
+        temperature: 0.55,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          required: ["hashtags"],
+          properties: {
+            hashtags: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+          },
+        },
+      },
+    });
+
+    const result = extractJson(response.text ?? "") as HashtagSuggestionResponse;
+    const suggestions = sanitizeHashtags(result.hashtags ?? []);
+    return suggestions.length > 0 ? suggestions : baseFallback;
+  } catch (error) {
+    console.warn(`[AI Hashtags] Falling back to keyword hashtags: ${errorMessage(error)}`);
+    return baseFallback;
+  }
 };

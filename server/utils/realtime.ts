@@ -4,7 +4,8 @@ type RealtimeEventName =
   | "connected"
   | "posts:changed"
   | "dashboard:changed"
-  | "activity:changed";
+  | "activity:changed"
+  | "settings:changed";
 
 type Client = {
   id: string;

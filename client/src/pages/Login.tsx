@@ -5,6 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 
+const PASSWORD_REQUIREMENTS =
+    "Password must be at least 8 characters, start with an uppercase letter, and include a special character.";
+const PASSWORD_PATTERN = /^[A-Z](?=.*[^A-Za-z0-9\s]).{7,}$/;
+
 interface IconProps {
     size?: number;
     strokeWidth?: number;
@@ -137,6 +141,12 @@ export default function Login() {
         setLoading(true);
         setError("");
 
+        if (!loginState && !PASSWORD_PATTERN.test(password)) {
+            setLoading(false);
+            setError(PASSWORD_REQUIREMENTS);
+            return;
+        }
+
         try {
             if (loginState) {
                 await login(email, password);
@@ -229,6 +239,9 @@ export default function Login() {
                                     <LockIcon className="size-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input type="password" required placeholder="********" className="w-full pl-10 pr-4 py-3 bg-slate-50/50 outline-none border border-slate-200 rounded-xl transition-all focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10" value={password} onChange={(e) => setPassword(e.target.value)} />
                                 </div>
+                                <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+                                    {PASSWORD_REQUIREMENTS}
+                                </p>
                             </div>
 
                             <motion.button 

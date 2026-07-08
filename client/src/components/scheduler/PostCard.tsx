@@ -1,4 +1,4 @@
-import { CalendarClock, Copy, Pencil, Rocket, Trash2 } from "lucide-react";
+import { CalendarClock, Copy, MapPin, Pencil, Rocket, Trash2 } from "lucide-react";
 
 import type { ScheduledPost } from "../../types";
 import { cn } from "../../utils/cn";
@@ -58,6 +58,12 @@ export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) =
           )}
         >
           {getTimeRemaining(post.scheduledDate, post.scheduledTime)}
+        </span>
+      )}
+      {post.location && (
+        <span className="inline-flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5" />
+          {post.location}
         </span>
       )}
     </div>

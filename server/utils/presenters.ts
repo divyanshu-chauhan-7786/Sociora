@@ -36,6 +36,7 @@ export const presentPost = (post: any) => ({
   platforms: post.platforms,
   scheduledDate: post.scheduledDate,
   scheduledTime: post.scheduledTime,
+  location: post.location ?? "",
   status: post.status,
   createdAt: post.createdAt.toISOString(),
   updatedAt: post.updatedAt?.toISOString(),

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Generation from "../models/Generation.js";
 import WorkspaceSettings from "../models/WorkspaceSettings.js";
-import { generateSocialDraft } from "../services/googleAi.js";
+import { generateHashtagSuggestions, generateSocialDraft } from "../services/googleAi.js";
 import { presentGeneration } from "../utils/presenters.js";
 import { recordActivity } from "../utils/activity.js";
 import { broadcastWorkspaceChanged } from "../utils/realtime.js";
@@ -47,4 +47,27 @@ export const createGeneration = async (req: Request | any, res: Response): Promi
   broadcastWorkspaceChanged(req.user._id.toString(), { generationId: generation._id.toString(), status: "generated" });
 
   res.status(201).json(presentGeneration(generation));
+};
+
+export const suggestHashtags = async (req: Request | any, res: Response): Promise<void> => {
+  const { content, platforms = [] } = req.body;
+
+  if (!content?.trim()) {
+    res.status(400).json({ message: "Content is required before generating hashtags" });
+    return;
+  }
+
+  if (!Array.isArray(platforms)) {
+    res.status(400).json({ message: "Platforms must be a list" });
+    return;
+  }
+
+  const settings = await WorkspaceSettings.findOne({ user: req.user._id });
+  const hashtags = await generateHashtagSuggestions({
+    content: content.trim(),
+    platforms,
+    brandVoice: settings?.brandVoice ?? "Professional but approachable.",
+  });
+
+  res.json({ hashtags });
 };

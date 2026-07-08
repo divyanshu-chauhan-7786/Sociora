@@ -103,6 +103,7 @@ const Dashboard = () => {
     published: 0,
     connectedAccounts: 0,
     drafts: 0,
+    aiDrafts: 0,
     failed: 0,
     publishingHealth: 0,
   };
