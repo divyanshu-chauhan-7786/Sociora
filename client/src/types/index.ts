@@ -79,7 +79,10 @@ export interface ScheduledPost {
   zernioPostId?: string;
   mediaUrl?: string;
   mediaName?: string;
-  mediaType?: "image" | "video";
+  mediaType?: "image" | "video" | "reel";
+  reelAudioName?: string;
+  reelCoverUrl?: string;
+  reelShareToFeed?: boolean;
   source?: "manual" | "ai";
 }
 

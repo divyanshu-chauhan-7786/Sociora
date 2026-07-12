@@ -61,7 +61,13 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+const API_ORIGIN = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
+if (!API_ORIGIN) {
+  throw new Error("VITE_API_URL is not configured");
+}
+
+const API_BASE_URL = `${API_ORIGIN}/api`;
 const TOKEN_KEY = "sociora.auth.token";
 const USER_KEY = "sociora.auth.user";
 
@@ -98,6 +104,7 @@ const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
+    credentials: init.credentials ?? "include",
     headers,
   });
 

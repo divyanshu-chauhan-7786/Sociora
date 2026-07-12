@@ -1,4 +1,4 @@
-import { CalendarClock, Copy, MapPin, Pencil, Rocket, Trash2 } from "lucide-react";
+import { CalendarClock, Copy, Film, MapPin, Music2, Pencil, Rocket, Trash2 } from "lucide-react";
 
 import type { ScheduledPost } from "../../types";
 import { cn } from "../../utils/cn";
@@ -26,11 +26,19 @@ const statusTone = {
 export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) => (
   <Card className="group overflow-hidden p-4 hover:border-red-100 hover:shadow-md dark:hover:border-slate-700">
     {post.mediaUrl && (
-      <img
-        alt=""
-        className="mb-4 h-40 w-full rounded-lg object-cover"
-        src={post.mediaUrl}
-      />
+      post.mediaType === "video" || post.mediaType === "reel" ? (
+        <video
+          className="mb-4 h-40 w-full rounded-lg object-cover"
+          controls
+          src={post.mediaUrl}
+        />
+      ) : (
+        <img
+          alt=""
+          className="mb-4 h-40 w-full rounded-lg object-cover"
+          src={post.mediaUrl}
+        />
+      )
     )}
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0 flex-1">
@@ -69,7 +77,17 @@ export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) =
     </div>
 
     {post.mediaName && (
-      <p className="mt-2 text-xs font-medium text-slate-400">Media: {post.mediaName}</p>
+      <p className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-400">
+        {post.mediaType === "reel" ? <Film className="h-3.5 w-3.5" /> : null}
+        {post.mediaType === "reel" ? "Reel" : "Media"}: {post.mediaName}
+      </p>
+    )}
+
+    {post.mediaType === "reel" && post.reelAudioName && (
+      <p className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-400">
+        <Music2 className="h-3.5 w-3.5" />
+        Audio: {post.reelAudioName}
+      </p>
     )}
 
     {post.publishError && (

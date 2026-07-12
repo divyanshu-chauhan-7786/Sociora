@@ -49,7 +49,22 @@ const postSchema = new mongoose.Schema({
   mediaName: String,
   mediaType: {
     type: String,
-    enum: ["image", "video"],
+    enum: ["image", "video", "reel"],
+  },
+  reelAudioName: {
+    type: String,
+    trim: true,
+    maxlength: 100,
+    default: "",
+  },
+  reelCoverUrl: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  reelShareToFeed: {
+    type: Boolean,
+    default: true,
   },
   source: {
     type: String,

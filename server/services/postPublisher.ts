@@ -31,15 +31,89 @@ const getZernioPostId = (response: any) =>
   response?.data?.id ||
   "";
 
-const buildPlatformSpecificData = (platform: PlatformId, location: string) => {
-  if (!location || !["instagram", "facebook"].includes(platform)) {
+const getReelTitle = (content: string) => {
+  const title = content.trim().split(/\s+/).slice(0, 8).join(" ");
+  return title || "Sociora Reel";
+};
+
+const buildPlatformSpecificData = (platform: PlatformId, post: any) => {
+  const location = post.location?.trim() ?? "";
+  const isReel = post.mediaType === "reel";
+
+  if (!location && !isReel) {
     return undefined;
   }
 
-  return {
-    location,
-    locationName: location,
+  if (!["instagram", "facebook"].includes(platform)) {
+    return undefined;
+  }
+
+  const data: Record<string, unknown> = {};
+
+  if (location) {
+    data.location = location;
+    data.locationName = location;
+  }
+
+  if (isReel && platform === "instagram") {
+    data.shareToFeed = post.reelShareToFeed ?? true;
+
+    if (post.reelAudioName) {
+      data.audioName = post.reelAudioName;
+    }
+
+    if (post.reelCoverUrl) {
+      data.instagramThumbnail = post.reelCoverUrl;
+      data.reelCover = post.reelCoverUrl;
+    }
+  }
+
+  if (isReel && platform === "facebook") {
+    data.contentType = "reel";
+    data.title = getReelTitle(post.content);
+  }
+
+  return Object.keys(data).length > 0 ? data : undefined;
+};
+
+const getMediaItemType = (mediaType?: string) => {
+  if (mediaType === "image") {
+    return "image";
+  }
+
+  return "video";
+};
+
+const buildMediaItems = (post: any) => {
+  if (!post.mediaUrl) {
+    return undefined;
+  }
+
+  return [{
+    type: getMediaItemType(post.mediaType),
+    url: post.mediaUrl,
+    filename: post.mediaName,
+    ...(post.reelCoverUrl ? { instagramThumbnail: post.reelCoverUrl, thumbnail: post.reelCoverUrl } : {}),
+  }];
+};
+
+const buildMetadata = (post: any, location: string) => {
+  const metadata: Record<string, unknown> = {
+    socioraPostId: post._id.toString(),
+    trigger: "sociora-scheduler",
   };
+
+  if (location) {
+    metadata.location = location;
+  }
+
+  if (post.mediaType === "reel") {
+    metadata.contentType = "reel";
+    metadata.reelAudioName = post.reelAudioName ?? "";
+    metadata.reelShareToFeed = post.reelShareToFeed ?? true;
+  }
+
+  return metadata;
 };
 
 const publishToZernio = async (post: any) => {
@@ -62,7 +136,7 @@ const publishToZernio = async (post: any) => {
       throw new Error(`No connected ${platform} account with a Zernio account ID was found.`);
     }
 
-    const platformSpecificData = buildPlatformSpecificData(platform, location);
+    const platformSpecificData = buildPlatformSpecificData(platform, post);
 
     return {
       platform,
@@ -75,13 +149,7 @@ const publishToZernio = async (post: any) => {
     throw new Error("Media must be uploaded before publishing. Please reselect the media and save the post again.");
   }
 
-  const mediaItems = post.mediaUrl
-    ? [{
-      type: post.mediaType ?? "image",
-      url: post.mediaUrl,
-      filename: post.mediaName,
-    }]
-    : undefined;
+  const mediaItems = buildMediaItems(post);
 
   return (zernio as any).posts.createPost({
     body: {
@@ -90,11 +158,7 @@ const publishToZernio = async (post: any) => {
       publishNow: true,
       ...(location ? { location } : {}),
       mediaItems,
-      metadata: {
-        socioraPostId: post._id.toString(),
-        trigger: "sociora-scheduler",
-        ...(location ? { location } : {}),
-      },
+      metadata: buildMetadata(post, location),
     },
   });
 };
