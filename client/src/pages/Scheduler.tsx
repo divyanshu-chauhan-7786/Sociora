@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarPlus, Hash, ImagePlus, Loader2, MapPin, RotateCcw, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Film, Hash, ImagePlus, Loader2, MapPin, Music2, RotateCcw, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
@@ -47,6 +47,10 @@ const Scheduler = () => {
   const [location, setLocation] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | undefined>();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaType, setMediaType] = useState<ScheduledPost["mediaType"]>();
+  const [reelAudioName, setReelAudioName] = useState("");
+  const [reelCoverUrl, setReelCoverUrl] = useState("");
+  const [reelShareToFeed, setReelShareToFeed] = useState(true);
   const [activeTab, setActiveTab] = useState<PostStatus>("scheduled");
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
@@ -145,6 +149,10 @@ const Scheduler = () => {
     [activeTab, posts],
   );
 
+  const reelPlatformsSelected = selectedPlatforms.some((platform) => platform === "instagram" || platform === "facebook");
+  const isVideoMedia = mediaType === "video" || mediaType === "reel";
+  const canUseReel = Boolean(previewUrl) && isVideoMedia && reelPlatformsSelected;
+
   const resetForm = () => {
     setContent("");
     setSelectedPlatforms([]);
@@ -153,6 +161,10 @@ const Scheduler = () => {
     setLocation("");
     setPreviewUrl(undefined);
     setMediaFile(null);
+    setMediaType(undefined);
+    setReelAudioName("");
+    setReelCoverUrl("");
+    setReelShareToFeed(true);
     setEditingPostId(null);
     setHashtagSuggestions([]);
   };
@@ -189,12 +201,19 @@ const Scheduler = () => {
       return;
     }
 
+    if (mediaType === "reel" && !canUseReel) {
+      setError("Select Instagram or Facebook and upload a video before scheduling a Reel.");
+      return;
+    }
+
     setSaving(true);
     setError("");
 
     try {
       const currentPost = posts.find((post) => post.id === editingPostId);
       const uploadedMediaUrl = mediaFile ? await uploadMedia(mediaFile) : undefined;
+      const nextMediaUrl = uploadedMediaUrl ?? previewUrl ?? currentPost?.mediaUrl;
+      const nextMediaType = mediaFile ? mediaType : mediaType ?? currentPost?.mediaType;
       const payload = {
         content,
         platforms: selectedPlatforms,
@@ -202,8 +221,11 @@ const Scheduler = () => {
         scheduledTime,
         location: location.trim(),
         mediaName: mediaFile?.name ?? currentPost?.mediaName,
-        mediaType: (mediaFile?.type.startsWith("video/") ? "video" : mediaFile ? "image" : currentPost?.mediaType) as ScheduledPost["mediaType"],
-        mediaUrl: uploadedMediaUrl ?? previewUrl ?? currentPost?.mediaUrl,
+        mediaType: nextMediaType,
+        mediaUrl: nextMediaUrl,
+        reelAudioName: nextMediaType === "reel" ? reelAudioName.trim() : "",
+        reelCoverUrl: nextMediaType === "reel" ? reelCoverUrl.trim() : "",
+        reelShareToFeed: nextMediaType === "reel" ? reelShareToFeed : true,
         status: "scheduled" as const,
         source: "manual" as const,
       };
@@ -232,6 +254,10 @@ const Scheduler = () => {
     setScheduledTime(post.scheduledTime);
     setLocation(post.location ?? "");
     setPreviewUrl(post.mediaUrl);
+    setMediaType(post.mediaType);
+    setReelAudioName(post.reelAudioName ?? "");
+    setReelCoverUrl(post.reelCoverUrl ?? "");
+    setReelShareToFeed(post.reelShareToFeed ?? true);
     setEditingPostId(post.id);
     document.getElementById("scheduler-composer")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -396,7 +422,8 @@ const Scheduler = () => {
   const canSubmit =
     content.trim().length > 0 &&
     selectedPlatforms.length > 0 &&
-    selectedPlatforms.every((platform) => connectedPlatforms.includes(platform));
+    selectedPlatforms.every((platform) => connectedPlatforms.includes(platform)) &&
+    (mediaType !== "reel" || canUseReel);
 
   return (
     <>
@@ -517,18 +544,103 @@ const Scheduler = () => {
                     return;
                   }
 
+                  const nextMediaType = file.type.startsWith("video/")
+                    ? reelPlatformsSelected ? "reel" : "video"
+                    : "image";
+
                   setMediaFile(file);
+                  setMediaType(nextMediaType);
                   setPreviewUrl(URL.createObjectURL(file));
+
+                  if (nextMediaType !== "reel") {
+                    setReelAudioName("");
+                    setReelCoverUrl("");
+                    setReelShareToFeed(true);
+                  }
                 }}
                 type="file"
               />
             </label>
             {previewUrl && (
               <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-                {mediaFile?.type.startsWith("video/") ? (
+                {isVideoMedia ? (
                   <video className="max-h-80 w-full" controls src={previewUrl} />
                 ) : (
                   <img alt="Selected media preview" className="max-h-80 w-full object-cover" src={previewUrl} />
+                )}
+              </div>
+            )}
+            {previewUrl && isVideoMedia && (
+              <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/50">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-black transition ${
+                      mediaType === "video"
+                        ? "border-slate-950 bg-slate-950 text-white dark:border-teal-500 dark:bg-teal-500"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                    }`}
+                    onClick={() => setMediaType("video")}
+                    type="button"
+                  >
+                    <Film className="h-4 w-4" />
+                    Video post
+                  </button>
+                  <button
+                    className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-black transition ${
+                      mediaType === "reel"
+                        ? "border-coral-500 bg-coral-600 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-coral-200 hover:text-coral-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                    disabled={!reelPlatformsSelected}
+                    onClick={() => setMediaType("reel")}
+                    type="button"
+                  >
+                    <Film className="h-4 w-4" />
+                    Instagram Reel
+                  </button>
+                </div>
+
+                {mediaType === "reel" && (
+                  <div className="space-y-3">
+                    <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Share to profile feed</span>
+                      <input
+                        checked={reelShareToFeed}
+                        className="h-5 w-5 rounded border-slate-300 text-coral-600 focus:ring-coral-200"
+                        onChange={(event) => setReelShareToFeed(event.target.checked)}
+                        type="checkbox"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
+                        <Music2 className="h-4 w-4 text-coral-600" />
+                        Original audio name
+                      </span>
+                      <input
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        maxLength={100}
+                        onChange={(event) => setReelAudioName(event.target.value)}
+                        placeholder="Example: Sociora original audio"
+                        value={reelAudioName}
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-bold text-slate-800 dark:text-slate-200">Reel cover URL</span>
+                      <input
+                        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        onChange={(event) => setReelCoverUrl(event.target.value)}
+                        placeholder="https://..."
+                        type="url"
+                        value={reelCoverUrl}
+                      />
+                    </label>
+
+                    <p className="text-xs font-semibold leading-5 text-slate-500">
+                      Music should be inside the uploaded video. Instagram publishing APIs allow naming original audio, not picking licensed music tracks.
+                    </p>
+                  </div>
                 )}
               </div>
             )}

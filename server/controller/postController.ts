@@ -23,8 +23,26 @@ const buildPostPayload = (body: any) => ({
   mediaUrl: body.mediaUrl,
   mediaName: body.mediaName,
   mediaType: body.mediaType,
+  reelAudioName: body.reelAudioName?.trim() ?? "",
+  reelCoverUrl: body.reelCoverUrl?.trim() ?? "",
+  reelShareToFeed: body.reelShareToFeed ?? true,
   source: body.source ?? "manual",
 });
+
+const validatePostPayload = (body: any) => {
+  if (body.mediaType !== "reel") {
+    return "";
+  }
+
+  if (!body.mediaUrl) {
+    return "Upload a video before scheduling a Reel.";
+  }
+
+  const platforms = Array.isArray(body.platforms) ? body.platforms : [];
+  const hasReelPlatform = platforms.some((platform: string) => ["instagram", "facebook"].includes(platform));
+
+  return hasReelPlatform ? "" : "Select Instagram or Facebook before scheduling a Reel.";
+};
 
 const ensureConnectedAccounts = async (userId: string, platforms: PlatformId[]) => {
   const accounts = await Account.find({
@@ -57,6 +75,13 @@ export const listPosts = async (req: Request | any, res: Response): Promise<void
 };
 
 export const createPost = async (req: Request | any, res: Response): Promise<void> => {
+  const validationError = validatePostPayload(req.body);
+
+  if (validationError) {
+    res.status(400).json({ message: validationError });
+    return;
+  }
+
   const missingPlatforms = await ensureConnectedAccounts(req.user._id.toString(), req.body.platforms ?? []);
 
   if (missingPlatforms.length > 0) {
@@ -83,6 +108,13 @@ export const createPost = async (req: Request | any, res: Response): Promise<voi
 };
 
 export const updatePost = async (req: Request | any, res: Response): Promise<void> => {
+  const validationError = validatePostPayload(req.body);
+
+  if (validationError) {
+    res.status(400).json({ message: validationError });
+    return;
+  }
+
   const missingPlatforms = await ensureConnectedAccounts(req.user._id.toString(), req.body.platforms ?? []);
 
   if (missingPlatforms.length > 0) {

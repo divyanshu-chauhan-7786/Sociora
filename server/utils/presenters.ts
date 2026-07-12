@@ -47,6 +47,9 @@ export const presentPost = (post: any) => ({
   mediaUrl: post.mediaUrl,
   mediaName: post.mediaName,
   mediaType: post.mediaType,
+  reelAudioName: post.reelAudioName ?? "",
+  reelCoverUrl: post.reelCoverUrl ?? "",
+  reelShareToFeed: post.reelShareToFeed ?? true,
   source: post.source,
 });
 
