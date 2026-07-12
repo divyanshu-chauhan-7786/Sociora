@@ -10,7 +10,7 @@ import { PlatformBadge } from "../ui/PlatformBadge";
 
 interface PostCardProps {
   post: ScheduledPost;
-  onDelete?: (postId: string) => void;
+  onDelete?: (post: ScheduledPost) => void;
   onEdit?: (post: ScheduledPost) => void;
   onPublish?: (postId: string) => void;
 }
@@ -110,7 +110,7 @@ export const PostCard = ({ post, onDelete, onEdit, onPublish }: PostCardProps) =
         <Button
           aria-label="Delete post"
           icon={<Trash2 className="h-4 w-4" />}
-          onClick={() => onDelete(post.id)}
+          onClick={() => onDelete(post)}
           size="sm"
           variant="danger"
         >
