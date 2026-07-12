@@ -49,6 +49,20 @@ export interface SocialAccount {
   lastSyncedAt: string;
 }
 
+export interface PlatformPost {
+  id: string;
+  platform: PlatformId;
+  accountId: string;
+  accountName: string;
+  content: string;
+  mediaUrl: string;
+  permalink: string;
+  publishedAt: string;
+  commentCount: number;
+  likeCount: number;
+  isAd: boolean;
+}
+
 export interface ScheduledPost {
   id: string;
   content: string;

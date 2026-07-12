@@ -1,4 +1,4 @@
-import { CalendarPlus, Hash, ImagePlus, Loader2, MapPin, RotateCcw, Send } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Hash, ImagePlus, Loader2, MapPin, RotateCcw, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
@@ -7,7 +7,9 @@ import { PostCard } from "../components/scheduler/PostCard";
 import { Button } from "../components/ui/Button";
 import { Card, CardHeader, CardTitle } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
+import { Modal } from "../components/ui/Modal";
 import { CardSkeleton } from "../components/ui/Skeleton";
+import { getPlatform } from "../constants/platforms";
 import { accountApi, generationApi, postApi, realtimeApi } from "../lib/api";
 import type { PlatformId, PostStatus, ScheduledPost, SocialAccount } from "../types";
 import { todayInputValue } from "../utils/date";
@@ -33,6 +35,8 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
 };
 
+const unpublishablePlatforms: PlatformId[] = ["facebook", "linkedin", "twitter", "youtube"];
+
 const Scheduler = () => {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
@@ -47,6 +51,10 @@ const Scheduler = () => {
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
   const [generatingHashtags, setGeneratingHashtags] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ScheduledPost | null>(null);
+  const [deletePlatforms, setDeletePlatforms] = useState<PlatformId[]>([]);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -228,15 +236,115 @@ const Scheduler = () => {
     document.getElementById("scheduler-composer")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleDelete = async (postId: string) => {
+  const handleDelete = async (post: ScheduledPost) => {
+    if (post.status === "published") {
+      setDeleteTarget(post);
+      setDeletePlatforms(post.platforms.filter((platform) => unpublishablePlatforms.includes(platform)));
+      setDeleteError("");
+      return;
+    }
+
     const confirmed = window.confirm("Delete this post from the queue?");
 
     if (!confirmed) {
       return;
     }
 
-    await postApi.delete(postId);
-    setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+    await postApi.delete(post.id);
+    setPosts((currentPosts) => currentPosts.filter((currentPost) => currentPost.id !== post.id));
+  };
+
+  const closeDeleteModal = () => {
+    if (deleting) {
+      return;
+    }
+
+    setDeleteTarget(null);
+    setDeletePlatforms([]);
+    setDeleteError("");
+  };
+
+  const toggleDeletePlatform = (platform: PlatformId) => {
+    setDeletePlatforms((currentPlatforms) =>
+      currentPlatforms.includes(platform)
+        ? currentPlatforms.filter((currentPlatform) => currentPlatform !== platform)
+        : [...currentPlatforms, platform],
+    );
+  };
+
+  const handleUnpublish = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    if (deletePlatforms.length === 0) {
+      setDeleteError("Select at least one supported platform.");
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      const result = await postApi.unpublish(deleteTarget.id, deletePlatforms);
+
+      if (result.deleted) {
+        setPosts((currentPosts) => currentPosts.filter((post) => post.id !== deleteTarget.id));
+      } else {
+        const updatedPost = result.post;
+
+        if (updatedPost) {
+          setPosts((currentPosts) => currentPosts.map((post) => post.id === updatedPost.id ? updatedPost : post));
+        }
+      }
+
+      if (result.failures && result.failures.length > 0) {
+        const failedPlatforms = result.failures.map((failure) => `${failure.platform}: ${failure.message}`).join(" ");
+        setDeleteError(failedPlatforms);
+        setDeleteTarget(result.post ?? deleteTarget);
+        setDeletePlatforms((currentPlatforms) =>
+          currentPlatforms.filter((platform) => result.failures?.some((failure) => failure.platform === platform)),
+        );
+        return;
+      }
+
+      setDeleteTarget(null);
+      setDeletePlatforms([]);
+      setDeleteError("");
+    } catch (requestError) {
+      setDeleteError(requestError instanceof Error ? requestError.message : "Post could not be deleted from the selected platforms.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleRemoveFromSocioraOnly = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "This will only remove the post from Sociora. It will not delete it from Instagram or any other social platform. Continue?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      await postApi.delete(deleteTarget.id);
+      setPosts((currentPosts) => currentPosts.filter((post) => post.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setDeletePlatforms([]);
+      setDeleteError("");
+    } catch (requestError) {
+      setDeleteError(requestError instanceof Error ? requestError.message : "Post could not be removed from Sociora.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handlePublish = async (postId: string) => {
@@ -291,12 +399,13 @@ const Scheduler = () => {
     selectedPlatforms.every((platform) => connectedPlatforms.includes(platform));
 
   return (
-    <motion.div 
-      variants={container} 
-      initial="hidden" 
-      animate="show" 
-      className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[0.9fr_1.1fr]"
-    >
+    <>
+      <motion.div 
+        variants={container} 
+        initial="hidden" 
+        animate="show" 
+        className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[0.9fr_1.1fr]"
+      >
       <motion.div variants={item} className="self-start">
         <Card className="rounded-[1.5rem]" id="scheduler-composer">
         <CardHeader>
@@ -535,7 +644,80 @@ const Scheduler = () => {
         </div>
         </Card>
       </motion.div>
-    </motion.div>
+      </motion.div>
+
+      {deleteTarget && (
+        <Modal
+          description="Choose where this published post should be deleted."
+          footer={(
+            <>
+              <Button disabled={deleting} onClick={closeDeleteModal} variant="secondary">
+                Cancel
+              </Button>
+              <Button disabled={deleting} onClick={handleRemoveFromSocioraOnly} variant="secondary">
+                Remove from Sociora only
+              </Button>
+              <Button
+                disabled={deleting || deletePlatforms.length === 0}
+                icon={deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                onClick={handleUnpublish}
+                variant="danger"
+              >
+                {deleting ? "Deleting..." : "Delete from selected"}
+              </Button>
+            </>
+          )}
+          onClose={closeDeleteModal}
+          title="Delete published post"
+        >
+          <div className="space-y-4">
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold leading-6 text-slate-700">
+              {deleteTarget.content}
+            </p>
+
+            {deleteError && (
+              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold leading-5 text-red-700">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="space-y-2">
+              {deleteTarget.platforms.map((platform) => {
+                const platformMeta = getPlatform(platform);
+                const supported = unpublishablePlatforms.includes(platform);
+                const checked = deletePlatforms.includes(platform);
+
+                return (
+                  <label
+                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-3"
+                    key={platform}
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm font-black text-slate-900">
+                        {platformMeta?.name ?? platform}
+                      </span>
+                      {!supported && (
+                        <span className="mt-1 flex items-center gap-1 text-xs font-bold text-amber-700">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Instagram does not allow published post deletion through this SDK. Delete it in Instagram, or remove only the Sociora record.
+                        </span>
+                      )}
+                    </span>
+                    <input
+                      checked={checked}
+                      className="h-5 w-5 rounded border-slate-300 text-coral-600 focus:ring-coral-200"
+                      disabled={!supported || deleting}
+                      onChange={() => toggleDeletePlatform(platform)}
+                      type="checkbox"
+                    />
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };
 

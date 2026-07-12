@@ -1,4 +1,4 @@
-import type { ActivityItem, Generation, PlatformId, ScheduledPost, SocialAccount, Tone } from "../types";
+import type { ActivityItem, Generation, PlatformId, PlatformPost, ScheduledPost, SocialAccount, Tone } from "../types";
 
 export interface AuthUser {
   id: string;
@@ -43,6 +43,13 @@ export interface SettingsResponse {
       weeklyDigest: boolean;
     };
   };
+}
+
+export interface UnpublishPostResponse {
+  deleted: boolean;
+  deletedPlatforms: PlatformId[];
+  failures?: Array<{ platform: PlatformId | string; message: string }>;
+  post?: ScheduledPost;
 }
 
 export class ApiError extends Error {
@@ -134,6 +141,10 @@ export const realtimeApi = {
 
 export const accountApi = {
   list: () => request<SocialAccount[]>("/accounts"),
+  platformPosts: (platform?: PlatformId) => {
+    const query = platform ? `?platform=${encodeURIComponent(platform)}` : "";
+    return request<{ posts: PlatformPost[]; meta?: { accountsQueried?: number; accountsFailed?: number; lastUpdated?: string } }>(`/accounts/platform-posts${query}`);
+  },
   connect: (platform: PlatformId) =>
     request<SocialAccount>("/accounts", {
       method: "POST",
@@ -157,6 +168,11 @@ export const postApi = {
     request<ScheduledPost>(`/posts/${id}`, { method: "PUT", body: JSON.stringify(post) }),
   delete: (id: string) => request<void>(`/posts/${id}`, { method: "DELETE" }),
   publish: (id: string) => request<ScheduledPost>(`/posts/${id}/publish`, { method: "POST" }),
+  unpublish: (id: string, platforms: PlatformId[]) =>
+    request<UnpublishPostResponse>(`/posts/${id}/unpublish`, {
+      method: "POST",
+      body: JSON.stringify({ platforms }),
+    }),
 };
 
 export const generationApi = {
