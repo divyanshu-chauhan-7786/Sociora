@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from 'express';
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import accountRoutes from "./routes/accountRoutes.js";
@@ -18,11 +18,33 @@ const app = express();
 
 await connectDB()
 
-// Middleware
-app.use(cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+const normalizeOrigin = (origin: string) => origin.replace(/\/$/, "");
+const configuredClientOrigins = [
+    process.env.CLIENT_ORIGIN,
+    ...(process.env.CLIENT_ORIGINS?.split(",") ?? []),
+]
+    .map((origin) => origin?.trim())
+    .filter((origin): origin is string => Boolean(origin))
+    .map(normalizeOrigin);
+
+const allowedClientOrigins = new Set(
+    configuredClientOrigins.length > 0 ? configuredClientOrigins : ["http://localhost:5173"]
+);
+
+const corsOptions: CorsOptions = {
+    origin(origin, callback) {
+        if (!origin || allowedClientOrigins.has(normalizeOrigin(origin))) {
+            callback(null, true);
+            return;
+        }
+
+        callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    },
     credentials: true,
-}))
+};
+
+// Middleware
+app.use(cors(corsOptions))
 app.use(express.json({ limit: "10mb" }));
 app.use((_req: Request, res: Response, next: NextFunction) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
