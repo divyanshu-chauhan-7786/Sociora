@@ -1,4 +1,4 @@
-import { CalendarPlus, Copy, Image, Pencil, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { CalendarPlus, Copy, Hash, Image, Pencil, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 import type { Generation, Tone } from "../../types";
@@ -11,6 +11,7 @@ interface GenerationCardProps {
   tones: Tone[];
   onDelete: (generation: Generation) => Promise<void>;
   onSchedule: (generation: Generation) => void;
+  onSuggestHashtags: (generation: Generation) => Promise<string[]>;
   onUpdate: (generation: Generation, payload: { prompt: string; content: string; tone: Tone }) => Promise<void>;
   onUsePrompt: (generation: Generation) => void;
 }
@@ -20,6 +21,7 @@ export const GenerationCard = ({
   tones,
   onDelete,
   onSchedule,
+  onSuggestHashtags,
   onUpdate,
   onUsePrompt,
 }: GenerationCardProps) => {
@@ -29,6 +31,11 @@ export const GenerationCard = ({
   const [draftTone, setDraftTone] = useState<Tone>(generation.tone);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGeneratingHashtags, setIsGeneratingHashtags] = useState(false);
+  const [hashtags, setHashtags] = useState<string[]>([]);
+
+  const characterCount = isEditing ? draftContent.length : generation.content.length;
+  const countTone = characterCount > 280 ? "text-amber-600" : "text-slate-400";
 
   const resetDraft = () => {
     setDraftContent(generation.content);
@@ -69,6 +76,41 @@ export const GenerationCard = ({
       await onDelete(generation);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleSuggestHashtags = async () => {
+    setIsGeneratingHashtags(true);
+
+    try {
+      const suggestedHashtags = await onSuggestHashtags(generation);
+      setHashtags(suggestedHashtags);
+    } finally {
+      setIsGeneratingHashtags(false);
+    }
+  };
+
+  const handleAddHashtags = async () => {
+    if (hashtags.length === 0) {
+      return;
+    }
+
+    const hashtagText = hashtags.join(" ");
+    const nextContent = generation.content.includes(hashtagText)
+      ? generation.content
+      : `${generation.content.trim()}\n\n${hashtagText}`;
+
+    setIsSaving(true);
+
+    try {
+      await onUpdate(generation, {
+        prompt: generation.prompt,
+        content: nextContent,
+        tone: generation.tone,
+      });
+      setHashtags([]);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -132,6 +174,46 @@ export const GenerationCard = ({
             {generation.content}
           </p>
         )}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-black">
+          <span className={countTone}>{characterCount} characters</span>
+          {characterCount <= 280 ? (
+            <span className="text-teal-600">Short-post friendly</span>
+          ) : (
+            <span className="text-amber-600">Better for LinkedIn/caption</span>
+          )}
+        </div>
+
+        {!isEditing && hashtags.length > 0 && (
+          <div className="mt-3 rounded-lg border border-teal-100 bg-teal-50/60 p-3">
+            <div className="flex flex-wrap gap-1.5">
+              {hashtags.map((hashtag) => (
+                <span key={hashtag} className="rounded-full bg-white px-2 py-1 text-xs font-black text-teal-700 shadow-sm">
+                  {hashtag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button
+                className="flex-1"
+                disabled={isSaving}
+                icon={<Save className="h-4 w-4" />}
+                onClick={handleAddHashtags}
+                size="sm"
+                variant="secondary"
+              >
+                Add
+              </Button>
+              <Button
+                icon={<X className="h-4 w-4" />}
+                onClick={() => setHashtags([])}
+                size="sm"
+                variant="ghost"
+              >
+                Hide
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
           {isEditing ? (
@@ -184,7 +266,14 @@ export const GenerationCard = ({
                 Reuse
               </Button>
               <Button
-                className="col-span-2"
+                disabled={isGeneratingHashtags}
+                icon={<Hash className="h-4 w-4" />}
+                onClick={handleSuggestHashtags}
+                variant="secondary"
+              >
+                {isGeneratingHashtags ? "Thinking" : "Hashtags"}
+              </Button>
+              <Button
                 disabled={isDeleting}
                 icon={<Trash2 className="h-4 w-4" />}
                 onClick={handleDelete}
