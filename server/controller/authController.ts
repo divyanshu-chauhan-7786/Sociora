@@ -4,9 +4,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import WorkspaceSettings from "../models/WorkspaceSettings.js";
 import { presentUser } from "../utils/presenters.js";
+import { getJwtSecret } from "../utils/auth.js";
 
 const generateToken = (id: string) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || "fallback_secret", {
+  return jwt.sign({ id }, getJwtSecret(), {
     expiresIn: "30d",
   });
 };
@@ -191,7 +192,7 @@ export const startOAuthLogin = async (req: Request, res: Response): Promise<void
     return;
   }
 
-  const state = jwt.sign({ provider }, process.env.JWT_SECRET || "fallback_secret", { expiresIn: "10m" });
+  const state = jwt.sign({ provider }, getJwtSecret(), { expiresIn: "10m" });
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: callbackUrl(provider),
@@ -223,7 +224,7 @@ export const completeOAuthLogin = async (req: Request, res: Response): Promise<v
   }
 
   try {
-    const decoded = jwt.verify(String(state), process.env.JWT_SECRET || "fallback_secret") as { provider: OAuthProvider };
+    const decoded = jwt.verify(String(state), getJwtSecret()) as { provider: OAuthProvider };
 
     if (decoded.provider !== provider) {
       redirectWithAuthError(res, "OAuth state mismatch. Please try again.");
@@ -238,10 +239,6 @@ export const completeOAuthLogin = async (req: Request, res: Response): Promise<v
       redirect_uri: callbackUrl(provider),
       grant_type: "authorization_code",
     });
-
-    // DEBUG: Terminal mein check karne ke liye ki string length sahi hai ya nahi
-    const secretLen = config.clientSecret ? config.clientSecret.length : 0;
-    console.log(`[OAuth Debug] Secret loaded. Length: ${secretLen}, Starts with: ${config.clientSecret?.substring(0, 7)}`);
 
     const tokenResponse = await fetch(config.tokenUrl, {
       method: "POST",

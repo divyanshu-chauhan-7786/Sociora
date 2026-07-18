@@ -1,18 +1,16 @@
 import { Request, Response } from "express";
 import Account from "../models/Account.js";
 import zernio from "../config/zernio.js";
+import { freePlatformValues, getPaidPlatformMessage, isFreePlatform, isKnownPlatform, type PlatformId } from "../config/plan.js";
 import { presentAccount } from "../utils/presenters.js";
 import { recordActivity } from "../utils/activity.js";
 import { broadcastWorkspaceChanged } from "../utils/realtime.js";
-
-const platformValues = ["instagram", "facebook", "linkedin", "twitter", "youtube"];
-type PlatformId = "instagram" | "facebook" | "linkedin" | "twitter" | "youtube";
 
 const normalizePlatform = (platform: unknown): PlatformId | null => {
   const value = String(platform || "").toLowerCase();
 
   if (value === "x") return "twitter";
-  return platformValues.includes(value) ? value as PlatformId : null;
+  return isKnownPlatform(value) ? value : null;
 };
 
 const getErrorMessage = (error: any, fallback: string) =>
@@ -47,7 +45,10 @@ const presentPlatformPost = (post: any, accountByZernioId: Map<string, any>) => 
 };
 
 export const listAccounts = async (req: Request | any, res: Response): Promise<void> => {
-  const accounts = await Account.find({ user: req.user._id }).sort({ createdAt: -1 });
+  const accounts = await Account.find({
+    user: req.user._id,
+    platform: { $in: Array.from(freePlatformValues) },
+  }).sort({ createdAt: -1 });
   res.json(accounts.map(presentAccount));
 };
 
@@ -59,6 +60,7 @@ export const listPlatformPosts = async (req: Request | any, res: Response): Prom
 
   const accounts = await Account.find({
     user: req.user._id,
+    platform: { $in: Array.from(freePlatformValues) },
     status: "connected",
     zernioAccountId: { $exists: true, $ne: "" },
   });
@@ -69,6 +71,11 @@ export const listPlatformPosts = async (req: Request | any, res: Response): Prom
   }
 
   const platform = typeof req.query.platform === "string" ? normalizePlatform(req.query.platform) : null;
+  if (platform && !isFreePlatform(platform)) {
+    res.status(400).json({ message: getPaidPlatformMessage([platform]) });
+    return;
+  }
+
   const accountByZernioId = new Map<string, any>();
   for (const account of accounts) {
     if (account.zernioAccountId) {
@@ -106,19 +113,26 @@ export const listPlatformPosts = async (req: Request | any, res: Response): Prom
 export const connectAccount = async (req: Request | any, res: Response): Promise<void> => {
   const { platform, handle } = req.body;
 
-  if (!platformValues.includes(platform)) {
+  const normalizedPlatform = normalizePlatform(platform);
+
+  if (!normalizedPlatform) {
     res.status(400).json({ message: "Unsupported platform" });
     return;
   }
 
+  if (!isFreePlatform(normalizedPlatform)) {
+    res.status(400).json({ message: getPaidPlatformMessage([normalizedPlatform]) });
+    return;
+  }
+
   const account = await Account.findOneAndUpdate(
-    { user: req.user._id, platform },
+    { user: req.user._id, platform: normalizedPlatform },
     {
       $set: {
         user: req.user._id,
-        platform,
-        handle: handle?.trim() || `${platform}_workspace`,
-        displayName: handle?.trim() || `${platform} workspace`,
+        platform: normalizedPlatform,
+        handle: handle?.trim() || `${normalizedPlatform}_workspace`,
+        displayName: handle?.trim() || `${normalizedPlatform} workspace`,
         status: "connected",
         audience: req.body.audience ?? "0",
       },
@@ -130,11 +144,11 @@ export const connectAccount = async (req: Request | any, res: Response): Promise
     user: req.user._id.toString(),
     type: "connected",
     title: "Account connected",
-    description: `${platform} account synced successfully.`,
-    platform: platform as PlatformId,
+    description: `${normalizedPlatform} account synced successfully.`,
+    platform: normalizedPlatform,
   });
 
-  broadcastWorkspaceChanged(req.user._id.toString(), { accountId: account._id.toString(), platform });
+  broadcastWorkspaceChanged(req.user._id.toString(), { accountId: account._id.toString(), platform: normalizedPlatform });
 
   res.status(201).json(presentAccount(account));
 };

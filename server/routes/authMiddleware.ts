@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { getJwtSecret } from "../utils/auth.js";
 
 interface JwtPayload {
   id: string;
@@ -24,7 +25,7 @@ export const protect = async (
       // Verify token
       const decoded = jwt.verify(
         token,
-        process.env.JWT_SECRET || "fallback_secret"
+        getJwtSecret()
       ) as JwtPayload;
 
       // Get user from the token and attach it to req.user (excluding the password)

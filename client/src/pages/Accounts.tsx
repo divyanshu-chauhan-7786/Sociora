@@ -1,5 +1,5 @@
 import { ExternalLink, Heart, MessageCircle, Plus, RefreshCw, ShieldCheck, Signal, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 import { AccountGrid } from "../components/accounts/AccountGrid";
@@ -8,7 +8,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { PlatformBadge } from "../components/ui/PlatformBadge";
-import { PLATFORMS } from "../constants/platforms";
+import { PLATFORMS, getActivePlatforms } from "../constants/platforms";
 import { accountApi } from "../lib/api";
 import type { PlatformId, PlatformPost, SocialAccount } from "../types";
 
@@ -45,6 +45,10 @@ const formatPostDate = (value: string) => {
 type PlatformFilter = PlatformId | "all";
 
 const Accounts = () => {
+  const connectedPlatform = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("connected");
+  }, []);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [platformPosts, setPlatformPosts] = useState<PlatformPost[]>([]);
   const [activePlatform, setActivePlatform] = useState<PlatformFilter>("all");
@@ -53,9 +57,11 @@ const Accounts = () => {
   const [syncing, setSyncing] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState(() =>
+    connectedPlatform ? `${connectedPlatform} connected. Syncing account details...` : "",
+  );
 
-  const loadPlatformPosts = async (platform: PlatformFilter = activePlatform) => {
+  const loadPlatformPosts = useCallback(async (platform: PlatformFilter = activePlatform) => {
     setLoadingPosts(true);
 
     try {
@@ -66,29 +72,27 @@ const Accounts = () => {
     } finally {
       setLoadingPosts(false);
     }
-  };
+  }, [activePlatform]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const connectedPlatform = params.get("connected");
-
     if (connectedPlatform) {
-      setNotice(`${connectedPlatform} connected. Syncing account details...`);
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    setSyncing(true);
-    accountApi.sync()
-      .then((syncedAccounts) => {
-        setAccounts(syncedAccounts);
-        if (connectedPlatform) {
-          setNotice("Account connected and synced.");
-        }
-        return loadPlatformPosts();
-      })
-      .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Accounts failed to sync"))
-      .finally(() => setSyncing(false));
-  }, []);
+    queueMicrotask(() => {
+      setSyncing(true);
+      accountApi.sync()
+        .then((syncedAccounts) => {
+          setAccounts(syncedAccounts);
+          if (connectedPlatform) {
+            setNotice("Account connected and synced.");
+          }
+          return loadPlatformPosts();
+        })
+        .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Accounts failed to sync"))
+        .finally(() => setSyncing(false));
+    });
+  }, [connectedPlatform, loadPlatformPosts]);
 
   const connectedIds = useMemo(
     () => accounts.map((account) => account.platform),
@@ -96,9 +100,11 @@ const Accounts = () => {
   );
 
   const connectedPlatforms = useMemo(
-    () => PLATFORMS.filter((platform) => connectedIds.includes(platform.id)),
+    () => PLATFORMS.filter((platform) => connectedIds.includes(platform.id) && platform.access === "free"),
     [connectedIds],
   );
+
+  const activePlatforms = useMemo(() => getActivePlatforms(), []);
 
   const activePlatformName = activePlatform === "all"
     ? "all connected platforms"
@@ -190,8 +196,8 @@ const Accounts = () => {
               <Signal className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-xl font-black text-slate-950">{PLATFORMS.length}</p>
-              <p className="text-sm font-bold text-slate-500">Supported platforms</p>
+              <p className="text-xl font-black text-slate-950">{activePlatforms.length}</p>
+              <p className="text-sm font-bold text-slate-500">Free platforms</p>
             </div>
           </div>
           </Card>
@@ -203,8 +209,8 @@ const Accounts = () => {
               <ShieldCheck className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-xl font-black text-slate-950">Secure</p>
-              <p className="text-sm font-bold text-slate-500">OAuth-ready model</p>
+              <p className="text-xl font-black text-slate-950">2.0</p>
+              <p className="text-sm font-bold text-slate-500">Payments upcoming</p>
             </div>
           </div>
           </Card>

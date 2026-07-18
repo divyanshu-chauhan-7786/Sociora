@@ -2,13 +2,11 @@ import { Request, Response } from "express";
 import zernio from "../config/zernio.js";
 import User from "../models/User.js";
 import Account from "../models/Account.js";
+import { freePlatformValues, getPaidPlatformMessage, isKnownPlatform, isFreePlatform, type PlatformId } from "../config/plan.js";
 import { presentAccount } from "../utils/presenters.js";
 import { broadcastWorkspaceChanged } from "../utils/realtime.js";
 
-const supportedPlatforms = ["instagram", "facebook", "linkedin", "twitter", "youtube"] as const;
-type SupportedPlatform = typeof supportedPlatforms[number];
-
-const normalizePlatform = (platform: unknown): SupportedPlatform | null => {
+const normalizePlatform = (platform: unknown): PlatformId | null => {
     const value = String(platform || "").toLowerCase();
 
     if (value === "instagram_business") return "instagram";
@@ -16,7 +14,7 @@ const normalizePlatform = (platform: unknown): SupportedPlatform | null => {
     if (value === "linkedin_page") return "linkedin";
     if (value === "x") return "twitter";
 
-    return supportedPlatforms.includes(value as SupportedPlatform) ? value as SupportedPlatform : null;
+    return isKnownPlatform(value) ? value : null;
 };
 
 // helper to ensure user has a zernio Profile
@@ -205,6 +203,11 @@ export const generateOAuthUrl = async (req: Request | any, res: Response): Promi
             return;
         }
 
+        if (!isFreePlatform(normalizedPlatform)) {
+            res.status(400).json({ message: getPaidPlatformMessage([normalizedPlatform]) });
+            return;
+        }
+
         if (!user) {
             res.status(401).json({ message: "Unauthorized. Please log in." });
             return;
@@ -225,8 +228,7 @@ export const generateOAuthUrl = async (req: Request | any, res: Response): Promi
         if (!url) {
             throw new Error("Zernio did not return an OAuth URL.");
         }
-        console.log(`[OAuth Debug] Zernio Auth URL generated for ${normalizedPlatform}:`, url);
-        
+
         res.status(200).json({ url });
     } catch (error: any) {
         console.error(`[OAuth Error] Failed to generate URL for ${req.params.platform}:`, error?.response?.data || error);
@@ -278,6 +280,10 @@ export const syncAccounts = async (req: Request | any, res: Response): Promise<v
                         return null;
                     }
 
+                    if (!isFreePlatform(platform)) {
+                        return null;
+                    }
+
                     const accountId = getAccountId(acc);
                     if (!accountId) {
                         return null;
@@ -324,7 +330,10 @@ export const syncAccounts = async (req: Request | any, res: Response): Promise<v
             }
         }
 
-        const syncedAccounts = await Account.find({ user: user._id });
+        const syncedAccounts = await Account.find({
+            user: user._id,
+            platform: { $in: Array.from(freePlatformValues) },
+        });
         broadcastWorkspaceChanged(user._id.toString(), { status: "accounts-synced" });
         res.status(200).json(syncedAccounts.map(presentAccount));
     } catch (error: any) {

@@ -25,6 +25,9 @@ export interface Platform {
   description: string;
   colorClass: string;
   bgClass: string;
+  access: "free" | "upcoming";
+  planLabel: string;
+  lockedDescription?: string;
 }
 
 export interface SocialAccount {

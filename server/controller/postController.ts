@@ -2,15 +2,14 @@ import { Request, Response } from "express";
 import Account from "../models/Account.js";
 import Post from "../models/Post.js";
 import zernio from "../config/zernio.js";
+import { getLockedPlatforms, getPaidPlatformMessage, platformValues, type PlatformId } from "../config/plan.js";
 import { publishPostNow } from "../services/postPublisher.js";
 import { presentPost } from "../utils/presenters.js";
 import { recordActivity } from "../utils/activity.js";
 import { broadcastWorkspaceChanged } from "../utils/realtime.js";
 
-type PlatformId = "instagram" | "facebook" | "linkedin" | "twitter" | "youtube";
 type UnpublishablePlatformId = Exclude<PlatformId, "instagram">;
 
-const platformValues: PlatformId[] = ["instagram", "facebook", "linkedin", "twitter", "youtube"];
 const unpublishablePlatforms: UnpublishablePlatformId[] = ["facebook", "linkedin", "twitter", "youtube"];
 
 const buildPostPayload = (body: any) => ({
@@ -30,6 +29,18 @@ const buildPostPayload = (body: any) => ({
 });
 
 const validatePostPayload = (body: any) => {
+  const platforms = Array.isArray(body.platforms) ? body.platforms : [];
+  const invalidPlatforms = platforms.filter((platform: unknown) => !platformValues.includes(platform as PlatformId));
+
+  if (invalidPlatforms.length > 0) {
+    return `Unsupported platform: ${invalidPlatforms.join(", ")}`;
+  }
+
+  const lockedPlatforms = getLockedPlatforms(platforms);
+  if (lockedPlatforms.length > 0) {
+    return getPaidPlatformMessage(lockedPlatforms);
+  }
+
   if (body.mediaType !== "reel") {
     return "";
   }
@@ -38,7 +49,6 @@ const validatePostPayload = (body: any) => {
     return "Upload a video before scheduling a Reel.";
   }
 
-  const platforms = Array.isArray(body.platforms) ? body.platforms : [];
   const hasReelPlatform = platforms.some((platform: string) => ["instagram", "facebook"].includes(platform));
 
   return hasReelPlatform ? "" : "Select Instagram or Facebook before scheduling a Reel.";

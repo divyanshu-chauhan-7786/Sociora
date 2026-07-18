@@ -30,6 +30,16 @@ const ProtectedRoute = () => {
     return user ? <Outlet /> : <Navigate replace to="/login" />;
 };
 
+const NotFoundRedirect = () => {
+    const { loading, user } = useAuth();
+
+    if (loading) {
+        return <PageLoader />;
+    }
+
+    return <Navigate replace to={user ? "/dashboard" : "/"} />;
+};
+
 export default function App() {
     return (
         <Suspense fallback={<PageLoader />}>
@@ -54,6 +64,7 @@ export default function App() {
                         <Route path="/settings" element={<Settings />} />
                     </Route>
                 </Route>
+                <Route path="*" element={<NotFoundRedirect />} />
 
             </Routes>
         </Suspense>

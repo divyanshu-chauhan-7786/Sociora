@@ -103,7 +103,9 @@ const Settings = () => {
   }, [applySettings]);
 
   useEffect(() => {
-    void loadSettings();
+    queueMicrotask(() => {
+      void loadSettings();
+    });
   }, [loadSettings]);
 
   useEffect(() => {
