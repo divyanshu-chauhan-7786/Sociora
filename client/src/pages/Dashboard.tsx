@@ -29,6 +29,7 @@ const Dashboard = () => {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isClearingActivity, setIsClearingActivity] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -82,6 +83,28 @@ const Dashboard = () => {
 
     return () => window.clearInterval(interval);
   }, [loadDashboard]);
+
+  const handleClearActivity = async () => {
+    const confirmed = window.confirm("Reset the activity feed for this workspace?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsClearingActivity(true);
+    setError("");
+
+    try {
+      await dashboardApi.clearActivity();
+      setDashboard((currentDashboard) =>
+        currentDashboard ? { ...currentDashboard, activities: [] } : currentDashboard,
+      );
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Activity feed could not be reset");
+    } finally {
+      setIsClearingActivity(false);
+    }
+  };
 
   // Show loader until real data comes through
   if (isLoading) {
@@ -245,7 +268,11 @@ const Dashboard = () => {
         </motion.div>
 
         <motion.div variants={item} className="h-full">
-          <ActivityTimeline activities={activities} />
+          <ActivityTimeline
+            activities={activities}
+            isClearing={isClearingActivity}
+            onClear={handleClearActivity}
+          />
         </motion.div>
       </section>
     </motion.div>

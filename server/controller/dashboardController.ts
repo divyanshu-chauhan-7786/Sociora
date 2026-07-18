@@ -4,6 +4,7 @@ import Activity from "../models/Activity.js";
 import Generation from "../models/Generation.js";
 import Post from "../models/Post.js";
 import { presentActivity, presentPost } from "../utils/presenters.js";
+import { broadcastWorkspaceChanged } from "../utils/realtime.js";
 
 export const getDashboard = async (req: Request | any, res: Response): Promise<void> => {
   const [posts, accounts, aiDrafts, activities] = await Promise.all([
@@ -52,4 +53,10 @@ export const getDashboard = async (req: Request | any, res: Response): Promise<v
       .map(presentPost),
     activities: activities.map(presentActivity),
   });
+};
+
+export const clearActivityFeed = async (req: Request | any, res: Response): Promise<void> => {
+  await Activity.deleteMany({ user: req.user._id });
+  broadcastWorkspaceChanged(req.user._id.toString(), { status: "activity-cleared" });
+  res.status(204).send();
 };

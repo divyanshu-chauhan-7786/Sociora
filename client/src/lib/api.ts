@@ -137,6 +137,7 @@ export const authApi = {
 
 export const dashboardApi = {
   get: () => request<DashboardResponse>("/dashboard"),
+  clearActivity: () => request<void>("/dashboard/activity", { method: "DELETE" }),
 };
 
 export const realtimeApi = {
@@ -186,6 +187,9 @@ export const generationApi = {
   list: () => request<Generation[]>("/generations"),
   create: (payload: { prompt: string; tone: Tone; generateImage: boolean }) =>
     request<Generation>("/generations", { method: "POST", body: JSON.stringify(payload) }),
+  update: (id: string, payload: { prompt?: string; content?: string; tone?: Tone }) =>
+    request<Generation>(`/generations/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+  delete: (id: string) => request<void>(`/generations/${id}`, { method: "DELETE" }),
   suggestHashtags: (payload: { content: string; platforms: PlatformId[] }) =>
     request<{ hashtags: string[] }>("/generations/hashtags", { method: "POST", body: JSON.stringify(payload) }),
 };

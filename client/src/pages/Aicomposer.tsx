@@ -80,6 +80,49 @@ const Aicomposer = () => {
     setActiveScheduler(null);
   };
 
+  const handleUpdateGeneration = async (
+    generation: Generation,
+    payload: { prompt: string; content: string; tone: Tone },
+  ) => {
+    setError("");
+
+    try {
+      const updatedGeneration = await generationApi.update(generation.id, payload);
+      setGenerations((currentGenerations) =>
+        currentGenerations.map((currentGeneration) =>
+          currentGeneration.id === updatedGeneration.id ? updatedGeneration : currentGeneration,
+        ),
+      );
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Generated content could not be updated");
+      throw requestError;
+    }
+  };
+
+  const handleDeleteGeneration = async (generation: Generation) => {
+    setError("");
+
+    try {
+      await generationApi.delete(generation.id);
+      setGenerations((currentGenerations) =>
+        currentGenerations.filter((currentGeneration) => currentGeneration.id !== generation.id),
+      );
+
+      if (activeScheduler?.id === generation.id) {
+        setActiveScheduler(null);
+      }
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Generated content could not be deleted");
+      throw requestError;
+    }
+  };
+
+  const handleUsePrompt = (generation: Generation) => {
+    setPrompt(generation.prompt);
+    setTone(generation.tone);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <motion.div 
       variants={container}
@@ -168,7 +211,11 @@ const Aicomposer = () => {
               <motion.div variants={item} key={generation.id}>
                 <GenerationCard
                   generation={generation}
+                  onDelete={handleDeleteGeneration}
                   onSchedule={setActiveScheduler}
+                  onUpdate={handleUpdateGeneration}
+                  onUsePrompt={handleUsePrompt}
+                  tones={tones}
                 />
               </motion.div>
             ))}

@@ -1,13 +1,16 @@
-import { AlertTriangle, CalendarCheck, CheckCircle2, PlugZap, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CheckCircle2, PlugZap, Sparkles, Trash2 } from "lucide-react";
 
 import type { ActivityItem } from "../../types";
 import { formatDateTime } from "../../utils/date";
+import { Button } from "../ui/Button";
 import { Card, CardHeader, CardTitle } from "../ui/Card";
 import { EmptyState } from "../ui/EmptyState";
 import { PlatformBadge } from "../ui/PlatformBadge";
 
 interface ActivityTimelineProps {
   activities: ActivityItem[];
+  isClearing?: boolean;
+  onClear?: () => void;
 }
 
 const activityIcon = {
@@ -18,7 +21,7 @@ const activityIcon = {
   failed: AlertTriangle,
 };
 
-export const ActivityTimeline = ({ activities }: ActivityTimelineProps) => (
+export const ActivityTimeline = ({ activities, isClearing = false, onClear }: ActivityTimelineProps) => (
   <Card className="overflow-hidden">
     <CardHeader>
       <div>
@@ -27,9 +30,23 @@ export const ActivityTimeline = ({ activities }: ActivityTimelineProps) => (
           Publishing, account, and AI events across the workspace.
         </p>
       </div>
-      <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-700">
-        {activities.length} events
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-700">
+          {activities.length} events
+        </span>
+        {onClear && activities.length > 0 && (
+          <Button
+            aria-label="Reset activity feed"
+            disabled={isClearing}
+            icon={<Trash2 className="h-4 w-4" />}
+            onClick={onClear}
+            size="sm"
+            variant="danger"
+          >
+            {isClearing ? "Resetting" : "Reset"}
+          </Button>
+        )}
+      </div>
     </CardHeader>
 
     {activities.length === 0 ? (
