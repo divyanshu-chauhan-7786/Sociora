@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Modal } from "../components/ui/Modal";
 import { CardSkeleton } from "../components/ui/Skeleton";
-import { getPlatform } from "../constants/platforms";
+import { getPlatform, isPlatformActive } from "../constants/platforms";
 import { accountApi, generationApi, postApi, realtimeApi } from "../lib/api";
 import type { PlatformId, PostStatus, ScheduledPost, SocialAccount } from "../types";
 import { todayInputValue } from "../utils/date";
@@ -130,6 +130,7 @@ const Scheduler = () => {
       Array.from(new Set(
         accounts
           .filter((account) => account.status === "connected")
+          .filter((account) => isPlatformActive(account.platform))
           .map((account) => account.platform),
       )),
     [accounts],
@@ -423,6 +424,7 @@ const Scheduler = () => {
     content.trim().length > 0 &&
     selectedPlatforms.length > 0 &&
     selectedPlatforms.every((platform) => connectedPlatforms.includes(platform)) &&
+    selectedPlatforms.every(isPlatformActive) &&
     (mediaType !== "reel" || canUseReel);
 
   return (

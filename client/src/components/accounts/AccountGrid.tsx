@@ -19,7 +19,7 @@ export const AccountGrid = ({ accounts, onDisconnect, onConnectClick }: AccountG
     return (
       <EmptyState
         action={<Button onClick={onConnectClick}>Connect account</Button>}
-        description="Connect Instagram, Facebook, LinkedIn, Twitter / X, or YouTube to start managing publishing from one place."
+        description="Connect Instagram or LinkedIn to start publishing on the free launch plan. Facebook, Twitter / X, and YouTube are locked for Sociora 2.0."
         icon={<PlugZap className="h-5 w-5" />}
         title="No accounts connected"
       />

@@ -3,9 +3,12 @@ import {
   X,
   CheckCircleIcon,
   ExternalLinkIcon,
+  LockIcon,
 } from "lucide-react";
 
 import { PLATFORMS } from "../assets/assets";
+import { isPlatformActive } from "../constants/platforms";
+import type { PlatformId } from "../types";
 import { getRealisticIcon } from "./ui/SocialIcons";
 
 interface PlatformPickerModelProps {
@@ -61,19 +64,22 @@ const PlatformPickerModel = ({
 
               const isConnecting =
                 connecting === platform.id;
+              const isLocked = !isPlatformActive(platform.id as PlatformId);
 
               return (
                 <button
                   key={platform.id}
                   disabled={
-                    isConnected || isConnecting
+                    isConnected || isConnecting || isLocked
                   }
                   onClick={() =>
-                    onConnect(platform.id)
+                    !isLocked && onConnect(platform.id)
                   }
-                  className={`w-full rounded-xl border p-4 text-left transition-all ${
+                  className={`w-full rounded-xl border p-4 text-left transition-all disabled:cursor-not-allowed ${
                     isConnected
                       ? "border-green-200 bg-green-50"
+                      : isLocked
+                      ? "border-slate-200 bg-slate-50 opacity-75"
                       : "border-slate-200 hover:border-red-200 hover:bg-red-50/30"
                   }`}
                 >
@@ -98,7 +104,9 @@ const PlatformPickerModel = ({
                       </h4>
 
                       <p className="mt-1 text-sm text-slate-500">
-                        {platform.description}
+                        {isLocked
+                          ? "Upcoming in Sociora 2.0 paid plans"
+                          : platform.description}
                       </p>
                     </div>
 
@@ -108,6 +116,8 @@ const PlatformPickerModel = ({
                         <CheckCircleIcon className="h-5 w-5 text-green-600" />
                       ) : isConnecting ? (
                         <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-red-500" />
+                      ) : isLocked ? (
+                        <LockIcon className="h-4 w-4 text-amber-600" />
                       ) : (
                         <ExternalLinkIcon className="h-4 w-4 text-slate-400" />
                       )}

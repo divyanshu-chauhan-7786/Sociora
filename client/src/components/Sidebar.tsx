@@ -33,7 +33,9 @@ const SidebarContent = ({
   }, []);
 
   useEffect(() => {
-    void loadDashboard();
+    queueMicrotask(() => {
+      void loadDashboard();
+    });
   }, [loadDashboard]);
 
   useEffect(() => {

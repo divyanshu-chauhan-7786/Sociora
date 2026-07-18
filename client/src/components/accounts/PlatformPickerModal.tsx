@@ -1,7 +1,8 @@
-import { CheckCircle2, ExternalLink, PlugZap } from "lucide-react";
+import { CheckCircle2, ExternalLink, Lock, PlugZap } from "lucide-react";
 
-import { PLATFORMS } from "../../constants/platforms";
+import { PLATFORMS, isPlatformActive } from "../../constants/platforms";
 import type { PlatformId } from "../../types";
+import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
 
@@ -28,28 +29,38 @@ export const PlatformPickerModal = ({
         const Icon = platform.icon;
         const isConnected = connectedIds.includes(platform.id);
         const isConnecting = connecting === platform.id;
+        const isLocked = !isPlatformActive(platform.id);
 
         return (
           <button
             key={platform.id}
-            className="group flex w-full items-center gap-4 rounded-lg border border-slate-200 p-4 text-left transition hover:border-teal-200 hover:bg-teal-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={isConnecting}
-            onClick={() => onConnect(platform.id)}
+            className="group flex w-full items-center gap-4 rounded-lg border border-slate-200 p-4 text-left transition hover:border-teal-200 hover:bg-teal-50/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-75"
+            disabled={isConnecting || isLocked}
+            onClick={() => {
+              if (!isLocked) {
+                onConnect(platform.id);
+              }
+            }}
             type="button"
           >
             <span className={`${platform.bgClass} ${platform.colorClass} flex h-12 w-12 shrink-0 items-center justify-center rounded-lg`}>
               <Icon className="h-6 w-6" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-black text-slate-950">{platform.name}</span>
+              <span className="flex flex-wrap items-center gap-2 text-sm font-black text-slate-950">
+                {platform.name}
+                <Badge tone={isLocked ? "warning" : "success"}>{platform.planLabel}</Badge>
+              </span>
               <span className="mt-1 block text-sm font-semibold text-slate-500">
-                {platform.description}
+                {isLocked ? platform.lockedDescription : platform.description}
               </span>
             </span>
             {isConnecting ? (
               <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600" />
             ) : isConnected ? (
               <CheckCircle2 className="h-5 w-5 text-teal-600" />
+            ) : isLocked ? (
+              <Lock className="h-4 w-4 text-amber-600" />
             ) : (
               <ExternalLink className="h-4 w-4 text-slate-400 transition group-hover:text-teal-600" />
             )}

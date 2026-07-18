@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { Generation, PlatformId, ScheduledPost } from "../../types";
+import { FREE_PLATFORM_IDS } from "../../constants/platforms";
 import { todayInputValue } from "../../utils/date";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
@@ -20,7 +21,11 @@ export const SchedulePostModal = ({
   const [platforms, setPlatforms] = useState<PlatformId[]>(["linkedin"]);
   const [date, setDate] = useState(todayInputValue());
   const [time, setTime] = useState("09:00");
-  const canSchedule = platforms.length > 0 && date.length > 0 && time.length > 0;
+  const canSchedule =
+    platforms.length > 0 &&
+    platforms.every((platform) => FREE_PLATFORM_IDS.includes(platform)) &&
+    date.length > 0 &&
+    time.length > 0;
 
   const handleSchedule = () => {
     if (!canSchedule) {
@@ -67,7 +72,7 @@ export const SchedulePostModal = ({
 
         <div>
           <label className="mb-2 block text-sm font-bold text-slate-800">Platforms</label>
-          <PlatformSelector onChange={setPlatforms} value={platforms} />
+          <PlatformSelector availablePlatforms={FREE_PLATFORM_IDS} onChange={setPlatforms} value={platforms} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

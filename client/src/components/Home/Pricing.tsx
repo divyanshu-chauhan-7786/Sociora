@@ -1,5 +1,5 @@
 import { motion, type Variants } from "framer-motion";
-import { CheckIcon, CircleCheckBigIcon } from "lucide-react";
+import { CheckIcon, CircleCheckBigIcon, LockIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const pricingPlans = [
@@ -8,17 +8,19 @@ const pricingPlans = [
     price: "Free",
     period: "",
     description: "For creators testing a cleaner scheduling workflow.",
-    features: ["2 social accounts", "10 scheduled posts/month", "5 AI credits/month", "Basic dashboard"],
+    features: ["Instagram + LinkedIn active", "10 scheduled posts/month", "5 AI credits/month", "Basic dashboard"],
     cta: "Get started free",
+    availability: "active",
     highlight: false,
   },
   {
     name: "Pro",
     price: "$29",
     period: "/month",
-    description: "For teams that want AI writing and unlimited scheduling.",
-    features: ["Unlimited accounts", "Unlimited scheduling", "200 AI credits/month", "Priority support"],
-    cta: "Start free trial",
+    description: "For teams that want paid channels, AI writing, and unlimited scheduling.",
+    features: ["Facebook, Twitter / X, and YouTube", "Unlimited scheduling", "200 AI credits/month", "Cards, UPI, and net banking"],
+    cta: "Coming in 2.0",
+    availability: "upcoming",
     highlight: true,
   },
   {
@@ -26,8 +28,9 @@ const pricingPlans = [
     price: "$79",
     period: "/month",
     description: "For multi-brand teams managing content at scale.",
-    features: ["Everything in Pro", "5 team seats", "Unlimited AI credits", "Custom AI personas"],
-    cta: "Contact sales",
+    features: ["Everything in Pro", "5 team seats", "Unlimited AI credits", "Invoices and team billing"],
+    cta: "Coming in 2.0",
+    availability: "upcoming",
     highlight: false,
   },
 ];
@@ -105,13 +108,13 @@ export default function Pricing() {
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <CircleCheckBigIcon className="size-4" />
-            Simple pricing
+            Free launch active
           </motion.div>
           <h2 className="max-w-2xl text-4xl font-black leading-snug text-slate-950 sm:text-5xl">
-            Start lean, upgrade when your content calendar grows.
+            Start free now, paid plans arrive with Sociora 2.0.
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base font-semibold leading-7 text-slate-500">
-            Transparent plans for solo creators, growing teams, and agencies. Cancel anytime.
+            Instagram and LinkedIn are active today. Paid platform access and payment methods are locked until the 2.0 launch.
           </p>
         </motion.div>
 
@@ -153,7 +156,7 @@ export default function Pricing() {
 
               {plan.highlight && (
                 <div className="absolute -top-px left-1/2 -translate-x-1/2 rounded-b-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] px-4 py-1.5 text-xs font-black text-white shadow-md">
-                  Most popular
+                  Upcoming
                 </div>
               )}
 
@@ -186,17 +189,28 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-6">
-                  <Link
-                    className={`flex min-h-12 w-full items-center justify-center rounded-xl text-sm font-black transition-colors ${
-                      plan.highlight
-                        ? "bg-[linear-gradient(135deg,#ef4444,#f97316)] text-white shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30"
-                        : "bg-slate-950 text-white hover:bg-slate-800"
-                    }`}
-                    to="/login"
-                  >
-                    {plan.cta}
-                  </Link>
+                <motion.div whileHover={{ scale: plan.availability === "active" ? 1.02 : 1 }} whileTap={{ scale: plan.availability === "active" ? 0.98 : 1 }} className="mt-6">
+                  {plan.availability === "active" ? (
+                    <Link
+                      className="flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-950 text-sm font-black text-white transition-colors hover:bg-slate-800"
+                      to="/login"
+                    >
+                      {plan.cta}
+                    </Link>
+                  ) : (
+                    <button
+                      className={`flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl text-sm font-black ${
+                        plan.highlight
+                          ? "bg-white/10 text-slate-300"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                      disabled
+                      type="button"
+                    >
+                      <LockIcon className="h-4 w-4" />
+                      {plan.cta}
+                    </button>
+                  )}
                 </motion.div>
               </div>
             </motion.article>

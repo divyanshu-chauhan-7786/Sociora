@@ -1,10 +1,10 @@
 import Account from "../models/Account.js";
 import Post from "../models/Post.js";
 import zernio from "../config/zernio.js";
+import { getLockedPlatforms, getPaidPlatformMessage, type PlatformId } from "../config/plan.js";
 import { recordActivity } from "../utils/activity.js";
 import { broadcastWorkspaceChanged } from "../utils/realtime.js";
 
-type PlatformId = "instagram" | "facebook" | "linkedin" | "twitter" | "youtube";
 type PublishTrigger = "manual" | "scheduled";
 
 const getScheduledAt = (post: any) => new Date(`${post.scheduledDate}T${post.scheduledTime}`);
@@ -119,6 +119,11 @@ const buildMetadata = (post: any, location: string) => {
 const publishToZernio = async (post: any) => {
   if (!process.env.ZERNIO_API_KEY) {
     throw new Error("ZERNIO_API_KEY is missing. Add it to server/.env to publish to real social accounts.");
+  }
+
+  const lockedPlatforms = getLockedPlatforms(post.platforms ?? []);
+  if (lockedPlatforms.length > 0) {
+    throw new Error(getPaidPlatformMessage(lockedPlatforms));
   }
 
   const accounts = await Account.find({
