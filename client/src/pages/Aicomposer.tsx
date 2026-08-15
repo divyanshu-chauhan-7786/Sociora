@@ -1,10 +1,11 @@
-import { History, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { History, Search, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 
 import { ComposerPanel } from "../components/ai-composer/ComposerPanel";
 import { GenerationCard } from "../components/ai-composer/GenerationCard";
 import { SchedulePostModal } from "../components/scheduler/SchedulePostModal";
+import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
 import { generationApi, postApi } from "../lib/api";
 import type { Generation, ScheduledPost, Tone } from "../types";
@@ -38,6 +39,8 @@ const Aicomposer = () => {
   const [loading, setLoading] = useState(false);
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [activeScheduler, setActiveScheduler] = useState<Generation | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [toneFilter, setToneFilter] = useState<Tone | "all">("all");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -45,6 +48,21 @@ const Aicomposer = () => {
       .then(setGenerations)
       .catch((requestError) => setError(requestError instanceof Error ? requestError.message : "Generations failed to load"));
   }, []);
+
+  const filteredGenerations = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return generations.filter((generation) => {
+      const matchesTone = toneFilter === "all" || generation.tone === toneFilter;
+
+      if (!normalizedQuery) {
+        return matchesTone;
+      }
+
+      const searchableText = `${generation.prompt} ${generation.content}`.toLowerCase();
+      return matchesTone && searchableText.includes(normalizedQuery);
+    });
+  }, [generations, searchQuery, toneFilter]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -78,6 +96,65 @@ const Aicomposer = () => {
       source: "ai",
     });
     setActiveScheduler(null);
+  };
+
+  const handleUpdateGeneration = async (
+    generation: Generation,
+    payload: { prompt: string; content: string; tone: Tone },
+  ) => {
+    setError("");
+
+    try {
+      const updatedGeneration = await generationApi.update(generation.id, payload);
+      setGenerations((currentGenerations) =>
+        currentGenerations.map((currentGeneration) =>
+          currentGeneration.id === updatedGeneration.id ? updatedGeneration : currentGeneration,
+        ),
+      );
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Generated content could not be updated");
+      throw requestError;
+    }
+  };
+
+  const handleDeleteGeneration = async (generation: Generation) => {
+    setError("");
+
+    try {
+      await generationApi.delete(generation.id);
+      setGenerations((currentGenerations) =>
+        currentGenerations.filter((currentGeneration) => currentGeneration.id !== generation.id),
+      );
+
+      if (activeScheduler?.id === generation.id) {
+        setActiveScheduler(null);
+      }
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Generated content could not be deleted");
+      throw requestError;
+    }
+  };
+
+  const handleUsePrompt = (generation: Generation) => {
+    setPrompt(generation.prompt);
+    setTone(generation.tone);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSuggestHashtags = async (generation: Generation) => {
+    setError("");
+
+    try {
+      const { hashtags } = await generationApi.suggestHashtags({
+        content: generation.content,
+        platforms: ["instagram", "facebook", "linkedin", "twitter", "youtube"],
+      });
+
+      return hashtags;
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Hashtags could not be generated");
+      throw requestError;
+    }
   };
 
   return (
@@ -154,6 +231,43 @@ const Aicomposer = () => {
           <span className="text-sm font-semibold text-slate-400">{generations.length} drafts</span>
         </motion.div>
 
+        {generations.length > 0 && (
+          <motion.div variants={item} className="mb-4 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm shadow-slate-200/40 md:grid-cols-[1fr_220px_auto]">
+            <label className="relative block">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-100"
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search generated drafts"
+                value={searchQuery}
+              />
+            </label>
+            <select
+              className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none transition focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
+              onChange={(event) => setToneFilter(event.target.value as Tone | "all")}
+              value={toneFilter}
+            >
+              <option value="all">All tones</option>
+              {tones.map((toneOption) => (
+                <option key={toneOption} value={toneOption}>
+                  {toneOption}
+                </option>
+              ))}
+            </select>
+            <Button
+              disabled={!searchQuery && toneFilter === "all"}
+              icon={<X className="h-4 w-4" />}
+              onClick={() => {
+                setSearchQuery("");
+                setToneFilter("all");
+              }}
+              variant="ghost"
+            >
+              Clear
+            </Button>
+          </motion.div>
+        )}
+
         {generations.length === 0 ? (
           <motion.div variants={item}>
             <EmptyState
@@ -162,13 +276,26 @@ const Aicomposer = () => {
               title="No generations yet"
             />
           </motion.div>
+        ) : filteredGenerations.length === 0 ? (
+          <motion.div variants={item}>
+            <EmptyState
+              description="Adjust your search or tone filter to bring matching drafts back into view."
+              icon={<Search className="h-5 w-5" />}
+              title="No matching drafts"
+            />
+          </motion.div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {generations.map((generation) => (
+            {filteredGenerations.map((generation) => (
               <motion.div variants={item} key={generation.id}>
                 <GenerationCard
                   generation={generation}
+                  onDelete={handleDeleteGeneration}
                   onSchedule={setActiveScheduler}
+                  onSuggestHashtags={handleSuggestHashtags}
+                  onUpdate={handleUpdateGeneration}
+                  onUsePrompt={handleUsePrompt}
+                  tones={tones}
                 />
               </motion.div>
             ))}

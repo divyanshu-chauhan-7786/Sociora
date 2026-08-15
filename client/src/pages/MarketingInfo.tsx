@@ -4,7 +4,9 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
+  Cpu,
   FileText,
+  Globe2,
   LockKeyhole,
   Mail,
   MapPin,
@@ -12,6 +14,7 @@ import {
   Phone,
   ShieldCheck,
   Sparkles,
+  Target,
   Users,
 } from "lucide-react";
 import { useEffect, type ComponentType } from "react";
@@ -67,6 +70,146 @@ const companyContact = {
   location: "Noida Sector 5, Uttar Pradesh, India",
 };
 
+const sidebarChecklists: Record<MarketingPageKey, { title: string; items: string[] }> = {
+  about: {
+    title: "Core Platform Capabilities",
+    items: [
+      "AI Captions & Tone Customization",
+      "Unified Multi-Channel Calendar",
+      "Real-Time Account Health Monitoring",
+      "Automated Post Scheduling & Drafts",
+    ],
+  },
+  blog: {
+    title: "Editorial & Publishing Standards",
+    items: [
+      "Tested Campaign Strategy Guides",
+      "Practical AI Prompt Engineering",
+      "Actionable Operational Checklists",
+      "Weekly Fresh Content & Case Studies",
+    ],
+  },
+  careers: {
+    title: "Why Work at Sociora",
+    items: [
+      "Remote-First & Async Culture",
+      "Competitive Growth & Perks",
+      "Modern React, Node & AI Stack",
+      "High Autonomy & Direct Impact",
+    ],
+  },
+  contact: {
+    title: "Support & Engagement SLA",
+    items: [
+      "24-Hour Response Guarantee",
+      "Dedicated Support Engineering",
+      "Guided Sales Walkthroughs",
+      "Community & Partner Program",
+    ],
+  },
+  privacy: {
+    title: "Privacy & Data Protection",
+    items: [
+      "Strict User-First Data Handling",
+      "Encrypted Sensitive Transport",
+      "No Sale of Customer Information",
+      "Easy Account & Data Export",
+    ],
+  },
+  terms: {
+    title: "Service & Account Guarantees",
+    items: [
+      "User Ownership of Created Content",
+      "Fair & Transparent Usage Policies",
+      "High Platform Uptime Commitment",
+      "Proactive Customer Support",
+    ],
+  },
+  security: {
+    title: "Security & Infrastructure",
+    items: [
+      "TLS Encryption in Transit",
+      "Scoped Integration Tokens",
+      "Continuous Automated Audits",
+      "Strict Access Control Policies",
+    ],
+  },
+  cookies: {
+    title: "Cookie Control Principles",
+    items: [
+      "Essential Login Session Support",
+      "Optional Product Analytics Choices",
+      "Browser Level Granular Control",
+      "No Invasive Cross-Site Tracking",
+    ],
+  },
+};
+
+const sectionDescriptions: Record<MarketingPageKey, string> = {
+  about:
+    "Sociora is built to simplify the complex realities of modern multi-channel social media management. From strategic campaign drafting to automated publishing, unified calendar views, and real-time account health monitoring, our platform gives creator teams and growing agencies total clarity, control, and consistency over their online presence.",
+  blog:
+    "Explore practical strategy blueprints, deep-dive AI prompt frameworks, channel-specific publishing guides, and operational workflows written by social creators for social creators. Our articles break down repeatable habits to help you plan campaigns faster without sacrificing authenticity or brand voice.",
+  careers:
+    "Join a passionate, remote-first team dedicated to building software that makes social media planning calm, intelligent, and delightfully efficient. We value high autonomy, thoughtful design, clean architecture, and continuous learning as we craft the next generation of social creator tools.",
+  contact:
+    "Whether you have product questions, need a guided demo for your agency, want to explore integration partnerships, or require technical workspace support, the Sociora team is here to assist. Reach out through any of our channels below for responsive, expert guidance.",
+  privacy:
+    "Your data privacy, account security, and content ownership are central to how we design Sociora. Learn how we handle your information, safeguard social platform OAuth tokens, maintain encrypted storage, and uphold strict user-first privacy standards across all our services.",
+  terms:
+    "Review the terms, acceptable use standards, content ownership policies, and service guarantees that govern your use of the Sociora workspace. We are committed to fair, transparent policies that protect your creative work and ensure reliable platform performance.",
+  security:
+    "Discover our multi-layered infrastructure security, encrypted token management, automated compliance checks, and secure multi-account authorization protocols designed to keep your social channels and team credentials safe at all times.",
+  cookies:
+    "Understand how Sociora uses essential session cookies and optional interface preferences to deliver a seamless, secure user experience. We give you transparent control over your browser data without invasive tracking or third-party data selling.",
+};
+
+const headerHighlights: Record<
+  MarketingPageKey,
+  Array<{ title: string; desc: string; theme: "orange" | "teal" | "amber" }>
+> = {
+  about: [
+    { title: "🎯 Built for Creators", desc: "Tailored for multi-channel social teams and growing agencies", theme: "orange" },
+    { title: "🤖 Responsible AI", desc: "Enhances your voice with AI caption drafting & tone control", theme: "teal" },
+    { title: "⚡ Unified Command", desc: "All channels, calendars, and drafts in one sleek workspace", theme: "amber" },
+  ],
+  blog: [
+    { title: "📚 Tested Frameworks", desc: "Real-world campaign strategies proven across active brands", theme: "orange" },
+    { title: "💡 AI Prompting Guides", desc: "Actionable prompts for captions, hooks, and content ideas", theme: "teal" },
+    { title: "📈 Weekly Insights", desc: "Fresh breakdown of social algorithms and publishing ops", theme: "amber" },
+  ],
+  careers: [
+    { title: "🌍 Remote-First", desc: "Work asynchronously with high trust and flexible schedule", theme: "orange" },
+    { title: "🚀 High Impact", desc: "Direct ownership of core AI features used by thousands", theme: "teal" },
+    { title: "🌱 Growth & Equity", desc: "Competitive compensation, learning stipends, and perks", theme: "amber" },
+  ],
+  contact: [
+    { title: "💬 Fast SLA Response", desc: "Dedicated email & phone support within 24 business hours", theme: "orange" },
+    { title: "🤝 Guided Demos", desc: "1-on-1 walkthroughs tailored for agencies & business teams", theme: "teal" },
+    { title: "🛠️ Support Engineers", desc: "Direct access to our technical team for workspace setup", theme: "amber" },
+  ],
+  privacy: [
+    { title: "🔒 Zero Data Sale", desc: "We never sell or monetize your personal or workspace data", theme: "orange" },
+    { title: "🔑 OAuth Security", desc: "Social tokens stored with bank-grade AES-256 encryption", theme: "teal" },
+    { title: "📋 Full Data Control", desc: "Export or purge your content and account details anytime", theme: "amber" },
+  ],
+  terms: [
+    { title: "🎨 100% User Owned", desc: "You retain full legal ownership of all created content", theme: "orange" },
+    { title: "⚖️ Fair Use Standard", desc: "Transparent usage limits designed for creators & teams", theme: "teal" },
+    { title: "⏱️ High Uptime SLA", desc: "Reliable platform infrastructure & active uptime monitoring", theme: "amber" },
+  ],
+  security: [
+    { title: "🔐 TLS 1.3 Transport", desc: "End-to-end encryption for all API & workspace traffic", theme: "orange" },
+    { title: "🛡️ Scoped Access", desc: "Least-privilege OAuth tokens for social platform safety", theme: "teal" },
+    { title: "🤖 Automated Audits", desc: "Continuous vulnerability scanning and patch management", theme: "amber" },
+  ],
+  cookies: [
+    { title: "🔑 Essential Session", desc: "Required only for secure authentication & app navigation", theme: "orange" },
+    { title: "🎛️ Granular Control", desc: "Easily toggle optional preference & analytics cookies", theme: "teal" },
+    { title: "🚫 No Invasive Tracking", desc: "Zero cross-site ad networks or invasive tracking scripts", theme: "amber" },
+  ],
+};
+
 const pages: Record<MarketingPageKey, PageContent> = {
   about: {
     badge: "Company",
@@ -97,6 +240,11 @@ const pages: Record<MarketingPageKey, PageContent> = {
         description:
           "Keep connected social profiles, scheduled posts, generated drafts, and workspace activity in one place instead of jumping between tools.",
       },
+      {
+        title: "Multi-platform sync",
+        description:
+          "Manage Instagram, LinkedIn, Facebook, and X content from one central command center with live status and account health checks.",
+      },
     ],
     sections: [
       {
@@ -112,6 +260,7 @@ const pages: Record<MarketingPageKey, PageContent> = {
           "Generate multiple post directions from one campaign idea.",
           "Adapt copy for LinkedIn, Instagram, X, Facebook, and other channels.",
           "Keep scheduling and publishing decisions visible to the team.",
+          "Maintain brand voice consistency and human approval before publishing.",
         ],
       },
       {
@@ -167,6 +316,12 @@ const pages: Record<MarketingPageKey, PageContent> = {
         title: "Editorial focus",
         body:
           "The Sociora blog is written for people who actually ship content. Instead of abstract marketing theory, the focus is on planning rituals, creative prompts, review systems, and small operational habits that help teams publish consistently.",
+        bullets: [
+          "Practical campaign frameworks over theoretical guides.",
+          "Step-by-step AI prompt engineering for social copy.",
+          "Operational rituals for high-velocity content teams.",
+          "Data-driven insights after posts go live.",
+        ],
       },
       {
         title: "Topics we cover",
@@ -231,12 +386,19 @@ const pages: Record<MarketingPageKey, PageContent> = {
           "Remote-friendly collaboration with clear ownership.",
           "Respect for focused work and thoughtful review.",
           "High standards for user experience and product reliability.",
+          "Competitive growth, autonomy, and modern tooling.",
         ],
       },
       {
         title: "Hiring process",
         body:
           "Candidates can expect a short intro conversation, a practical work discussion, and a final team interview. For technical and design roles, the exercise is scoped to mirror real Sociora work rather than trivia.",
+        bullets: [
+          "Initial intro conversation & role alignment (20 mins).",
+          "Practical work discussion based on real scenarios.",
+          "Technical or design exercise scoped to actual product tasks.",
+          "Final team interview & competitive offer proposal.",
+        ],
       },
     ],
     ctaLabel: "Contact hiring team",
@@ -258,25 +420,25 @@ const pages: Record<MarketingPageKey, PageContent> = {
     cards: [
       {
         title: "Product support",
-        meta: companyContact.email,
+        meta: "Support Channel",
         description:
           "For login issues, connected account questions, scheduling help, billing concerns, and workspace troubleshooting.",
       },
       {
         title: "Sales and demos",
-        meta: companyContact.phone,
+        meta: "Sales & Growth",
         description:
           "For creators, agencies, and businesses that want a guided walkthrough or help choosing the right workflow.",
       },
       {
         title: "Partnerships",
-        meta: companyContact.email,
+        meta: "Partnerships & Press",
         description:
           "For integration ideas, community collaborations, affiliate discussions, and co-marketing opportunities.",
       },
       {
         title: "Careers",
-        meta: companyContact.location,
+        meta: "Hiring & Talent",
         description:
           "For open roles, speculative applications, internships, and recruiting conversations.",
       },
@@ -289,13 +451,20 @@ const pages: Record<MarketingPageKey, PageContent> = {
         bullets: [
           `Email: ${companyContact.email}`,
           `Phone: ${companyContact.phone}`,
-          `Address: ${companyContact.location}`,
+          `Location: ${companyContact.location}`,
+          `Hours: Mon - Fri (9:00 AM - 6:00 PM IST)`,
         ],
       },
       {
         title: "What to include",
         body:
           "For the fastest answer, include your workspace email, the social platform involved, screenshots when relevant, and the action you were trying to complete. For sales or partnership requests, include your company name and expected team size.",
+        bullets: [
+          "Your active workspace email & connected social account name.",
+          "Specific platform involved (Instagram, LinkedIn, X, Facebook).",
+          "Relevant screenshots or error codes if troubleshooting.",
+          "Company name & expected team size for sales or demos.",
+        ],
       },
     ],
     ctaLabel: "Open the app",
@@ -329,6 +498,11 @@ const pages: Record<MarketingPageKey, PageContent> = {
         title: "We do not sell personal data",
         description:
           "Sociora does not sell customer personal information. Limited service providers may process data only to operate the product.",
+      },
+      {
+        title: "Transparent data retention",
+        description:
+          "Workspace content and account tokens are retained only as long as active, with easy deletion options when you close your account.",
       },
     ],
     sections: [
@@ -385,6 +559,11 @@ const pages: Record<MarketingPageKey, PageContent> = {
         description:
           "Subscription features, usage limits, and pricing may evolve. We provide notice for material changes that affect active customers.",
       },
+      {
+        title: "Accountability & support",
+        description:
+          "We strive for high uptime and platform reliability, offering responsive customer support to help resolve workspace issues.",
+      },
     ],
     sections: [
       {
@@ -439,6 +618,11 @@ const pages: Record<MarketingPageKey, PageContent> = {
         title: "Operational review",
         description:
           "The team monitors application behavior, investigates suspicious activity, and prioritizes fixes for security-relevant issues.",
+      },
+      {
+        title: "Continuous monitoring",
+        description:
+          "Automated checks, regular dependency updates, and access controls ensure workspace data stays safe against unauthorized access.",
       },
     ],
     sections: [
@@ -495,6 +679,11 @@ const pages: Record<MarketingPageKey, PageContent> = {
         description:
           "Help us understand product usage, page performance, and feature adoption so we can improve Sociora responsibly.",
       },
+      {
+        title: "Your privacy choices",
+        description:
+          "You can manage browser cookie settings at any time without compromising basic features that don't require non-essential tracking.",
+      },
     ],
     sections: [
       {
@@ -520,18 +709,24 @@ const pages: Record<MarketingPageKey, PageContent> = {
 
 function ContactStrip() {
   return (
-    <div className="grid gap-3 rounded-2xl border border-orange-200 bg-white p-4 shadow-xl shadow-orange-100/50 sm:grid-cols-3">
-      <a className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-orange-50" href={`mailto:${companyContact.email}`}>
-        <Mail className="h-5 w-5 text-orange-500" />
-        <span className="break-all text-sm font-bold text-slate-700">{companyContact.email}</span>
+    <div className="mb-10 grid gap-3 rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 p-4 shadow-xl backdrop-blur-xl sm:grid-cols-3">
+      <a className="flex items-center gap-3 rounded-2xl p-3.5 transition-all duration-300 hover:bg-orange-500/10 border border-slate-100 dark:border-white/5 hover:border-orange-500/30" href={`mailto:${companyContact.email}`}>
+        <div className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+          <Mail className="h-4.5 w-4.5" />
+        </div>
+        <span className="break-all text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200">{companyContact.email}</span>
       </a>
-      <a className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-orange-50" href="tel:+918960717110">
-        <Phone className="h-5 w-5 text-orange-500" />
-        <span className="text-sm font-bold text-slate-700">{companyContact.phone}</span>
+      <a className="flex items-center gap-3 rounded-2xl p-3.5 transition-all duration-300 hover:bg-orange-500/10 border border-slate-100 dark:border-white/5 hover:border-orange-500/30" href="tel:+918960717110">
+        <div className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+          <Phone className="h-4.5 w-4.5" />
+        </div>
+        <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200">{companyContact.phone}</span>
       </a>
-      <div className="flex items-center gap-3 rounded-xl p-3">
-        <MapPin className="h-5 w-5 text-orange-500" />
-        <span className="text-sm font-bold text-slate-700">{companyContact.location}</span>
+      <div className="flex items-center gap-3 rounded-2xl p-3.5 border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
+          <MapPin className="h-4.5 w-4.5" />
+        </div>
+        <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200">{companyContact.location}</span>
       </div>
     </div>
   );
@@ -547,11 +742,11 @@ function DetailRow({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-      <Icon className="mt-0.5 h-4 w-4 flex-none text-orange-300" />
+    <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-white/5 p-3.5 transition-all duration-300 hover:border-orange-500/40">
+      <Icon className="mt-0.5 h-4 w-4 flex-none text-orange-500 dark:text-orange-400" />
       <div>
-        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">{label}</div>
-        <div className="mt-1 text-sm font-bold leading-5 text-white">{value}</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400">{label}</div>
+        <div className="mt-0.5 text-xs font-bold leading-5 text-slate-800 dark:text-white break-all">{value}</div>
       </div>
     </div>
   );
@@ -566,65 +761,146 @@ export default function MarketingInfo({ page }: { page: MarketingPageKey }) {
   }, [page]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
+    <div className="relative min-h-screen bg-transparent font-sans text-slate-900 dark:text-white overflow-hidden">
+      {/* Background Gradients & Grid Pattern */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <svg
+          className="absolute inset-0 h-full w-full opacity-[0.035] dark:opacity-[0.05]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <pattern id="grid-marketing" width="48" height="48" patternUnits="userSpaceOnUse">
+              <path d="M 48 0 L 0 0 0 48" fill="none" stroke="currentColor" strokeWidth="0.8" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid-marketing)" />
+        </svg>
+
+        {/* Glowing Orbs */}
+        <div
+          className="absolute left-1/2 -top-40 -translate-x-1/2 rounded-full"
+          style={{
+            width: "900px",
+            height: "600px",
+            background: "radial-gradient(ellipse, rgba(239,68,68,0.12) 0%, rgba(249,115,22,0.10) 35%, transparent 70%)",
+            filter: "blur(60px)",
+          }}
+        />
+        <div
+          className="absolute right-0 top-1/3 rounded-full"
+          style={{
+            width: "600px",
+            height: "500px",
+            background: "radial-gradient(ellipse, rgba(20,184,166,0.10) 0%, transparent 70%)",
+            filter: "blur(70px)",
+          }}
+        />
+        <div
+          className="absolute -left-40 bottom-1/4 rounded-full"
+          style={{
+            width: "600px",
+            height: "500px",
+            background: "radial-gradient(ellipse, rgba(245,158,11,0.08) 0%, transparent 70%)",
+            filter: "blur(70px)",
+          }}
+        />
+      </div>
+
       <Navbar />
-      <main className="pt-24">
-        <section className="relative overflow-hidden border-b border-slate-200 bg-white">
-          <div className="absolute inset-0 opacity-[0.045]" aria-hidden="true">
-            <div className="h-full w-full bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:44px_44px]" />
-          </div>
-          <div className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-orange-200/40 blur-3xl" aria-hidden="true" />
-          <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-teal-100/60 blur-3xl" aria-hidden="true" />
-          <div className="relative mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-20">
-            <div className="grid gap-12 lg:grid-cols-[1fr_360px] lg:items-end">
+
+      <main className="relative z-10 pt-28 pb-20">
+        {/* Header Hero Section */}
+        <section className="relative pb-16 sm:pb-20">
+          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+            <div className="grid gap-12 lg:grid-cols-[1fr_380px] lg:items-center">
               <div>
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-widest text-orange-600">
-                  <Icon className="h-4 w-4" />
-                  {content.badge}
+                {/* Section Badge */}
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-teal-700 backdrop-blur-md dark:border-teal-400/30 dark:text-teal-300">
+                  <Icon className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                  <span>{content.badge}</span>
                 </div>
-                <h1 className="max-w-4xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+
+                <h1 className="max-w-4xl text-4xl font-black leading-[1.12] tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
                   {content.title}
                 </h1>
-                <p className="mt-6 max-w-3xl text-lg font-semibold leading-8 text-slate-600">
+
+                <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-slate-600 dark:text-slate-300">
                   {content.description}
                 </p>
+
                 <div className="mt-8 flex flex-wrap items-center gap-4">
                   <Link
-                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] px-5 text-sm font-black text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/30"
+                    className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-[linear-gradient(135deg,#ef4444,#f97316)] px-6 text-sm font-black text-white shadow-lg shadow-orange-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/35 active:translate-y-0"
                     to={content.ctaTo}
                   >
-                    {content.ctaLabel}
+                    <span>{content.ctaLabel}</span>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <span className="inline-flex items-center gap-2 text-sm font-bold text-slate-500">
-                    <CalendarDays className="h-4 w-4 text-slate-400" />
+
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 rounded-full border border-slate-200/80 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 px-4 py-2.5 backdrop-blur-md">
+                    <CalendarDays className="h-4 w-4 text-orange-500" />
                     {content.updated}
                   </span>
                 </div>
+
+                {/* Header Feature Highlights Bar to match right panel height */}
+                <div className="mt-8 grid gap-3.5 sm:grid-cols-3 max-w-3xl">
+                  {headerHighlights[page].map((highlight) => (
+                    <div
+                      key={highlight.title}
+                      className={`rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-slate-900/70 p-4 backdrop-blur-md transition-all duration-300 ${
+                        highlight.theme === "orange"
+                          ? "hover:border-orange-500/40 hover:bg-orange-500/5"
+                          : highlight.theme === "teal"
+                          ? "hover:border-teal-500/40 hover:bg-teal-500/5"
+                          : "hover:border-amber-500/40 hover:bg-amber-500/5"
+                      }`}
+                    >
+                      <div
+                        className={`text-xs font-black uppercase tracking-wider ${
+                          highlight.theme === "orange"
+                            ? "text-orange-600 dark:text-orange-400"
+                            : highlight.theme === "teal"
+                            ? "text-teal-600 dark:text-teal-400"
+                            : "text-amber-600 dark:text-amber-400"
+                        }`}
+                      >
+                        {highlight.title}
+                      </div>
+                      <div className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        {highlight.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-2xl shadow-slate-900/20">
-                <div className="border-b border-white/10 bg-white/[0.03] p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
-                      <Building2 className="h-5 w-5" />
+              {/* Right Panel / Stats Card */}
+              <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/15 bg-white/80 dark:bg-slate-900/80 p-1.5 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:border-orange-500/30">
+                <div className="border-b border-slate-200/70 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] p-5 rounded-t-[1.4rem]">
+                  <div className="flex items-center gap-3.5">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#ef4444,#f97316)] text-white shadow-md shadow-orange-500/20">
+                      <Building2 className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="text-sm font-black">Sociora Workspace</div>
-                      <div className="text-xs font-bold text-slate-400">AI social media planning suite</div>
+                      <div className="text-base font-black text-slate-950 dark:text-white">Sociora Workspace</div>
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400">AI social media planning suite</div>
                     </div>
                   </div>
                 </div>
-                <div className="grid gap-3 p-5">
-                {content.stats.map((stat) => (
-                  <div
-                    className="rounded-xl border border-white/10 bg-white/5 p-4"
-                    key={stat.label}
-                  >
-                    <div className="text-2xl font-black text-orange-300">{stat.value}</div>
-                    <div className="mt-1 text-sm font-bold text-slate-300">{stat.label}</div>
-                  </div>
-                ))}
+
+                <div className="grid gap-3 p-4">
+                  {content.stats.map((stat) => (
+                    <div
+                      className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-white/5 p-4 transition-all duration-300 hover:border-orange-500/40 hover:bg-orange-500/5"
+                      key={stat.label}
+                    >
+                      <div className="text-2xl font-black bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                        {stat.value}
+                      </div>
+                      <div className="mt-1 text-xs font-bold text-slate-600 dark:text-slate-300">{stat.label}</div>
+                    </div>
+                  ))}
                   <DetailRow icon={Mail} label="Email" value={companyContact.email} />
                   <DetailRow icon={Phone} label="Phone" value={companyContact.phone} />
                   <DetailRow icon={MapPin} label="Location" value={companyContact.location} />
@@ -634,31 +910,93 @@ export default function MarketingInfo({ page }: { page: MarketingPageKey }) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-14 sm:px-6 lg:px-8">
+        {/* Content Cards Section */}
+        <section className="mx-auto max-w-7xl px-5 py-12 sm:px-6 lg:px-8">
           {page === "contact" && <ContactStrip />}
 
-          <div className="mt-10 grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
             <div>
-              <div className="sticky top-28">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-orange-300 shadow-lg shadow-slate-900/15">
-                  <Sparkles className="h-5 w-5" />
+              <div className="sticky top-28 space-y-5">
+                <div>
+                  <h2 className="text-3xl font-black tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+                    {content.cardsTitle}
+                  </h2>
+                  <p className="mt-4 text-base font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+                    {sectionDescriptions[page]}
+                  </p>
                 </div>
-                <h2 className="mt-6 text-3xl font-black tracking-tight text-slate-950">
-                  {content.cardsTitle}
-                </h2>
-                <p className="mt-4 text-base font-semibold leading-7 text-slate-600">
-                  Sociora is focused on the real day-to-day work behind social media: drafting ideas, keeping content organized, managing accounts, and publishing with confidence.
-                </p>
+
+                {/* Page-Specific Checklist */}
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/5 p-5 backdrop-blur-md">
+                  <div className="text-xs font-black uppercase tracking-wider text-orange-600 dark:text-orange-400 mb-3.5">
+                    {sidebarChecklists[page].title}
+                  </div>
+                  <ul className="grid gap-2.5">
+                    {sidebarChecklists[page].items.map((item) => (
+                      <li key={item} className="flex items-center gap-2.5 text-sm font-bold text-slate-700 dark:text-slate-200">
+                        <CheckCircle2 className="h-4 w-4 text-teal-600 dark:text-teal-400 flex-none" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Fill Card to Match 2x2 Height Perfectly on All Pages */}
+                {page === "contact" ? (
+                  <div className="rounded-2xl border border-teal-500/30 bg-[linear-gradient(135deg,rgba(13,148,136,0.06)_0%,rgba(20,184,166,0.06)_100%)] dark:bg-[linear-gradient(135deg,rgba(13,148,136,0.12)_0%,rgba(20,184,166,0.12)_100%)] p-5 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-teal-500/50">
+                    <div className="flex items-center gap-3">
+                      <div className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-teal-600 text-white shadow-md">
+                        <Mail className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-slate-950 dark:text-white">Direct Support Assistance</div>
+                        <div className="text-xs font-bold text-teal-600 dark:text-teal-400">Guaranteed response within 24 hours</div>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+                      Need help connecting an account or setting up AI drafts? Send us an email or phone query for step-by-step guidance.
+                    </p>
+                    <div className="mt-4 flex items-center justify-between border-t border-teal-500/20 pt-3">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">⚡ Mon - Fri Support Active</span>
+                      <a href={`mailto:${companyContact.email}`} className="inline-flex items-center gap-1.5 text-xs font-black text-teal-600 dark:text-teal-400 hover:text-teal-500 transition-colors">
+                        <span>Send Email</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-orange-500/30 bg-[linear-gradient(135deg,rgba(239,68,68,0.06)_0%,rgba(249,115,22,0.06)_100%)] dark:bg-[linear-gradient(135deg,rgba(239,68,68,0.12)_0%,rgba(249,115,22,0.12)_100%)] p-5 backdrop-blur-md shadow-xl transition-all duration-300 hover:border-orange-500/50">
+                    <div className="flex items-center gap-3">
+                      <div className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] text-white shadow-md">
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-slate-950 dark:text-white">Elevate your social workflow</div>
+                        <div className="text-xs font-bold text-orange-600 dark:text-orange-400">Join creators & teams on Sociora</div>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+                      Schedule posts, generate AI captions, and keep your entire publishing calendar organized.
+                    </p>
+                    <div className="mt-4 flex items-center justify-between border-t border-orange-500/20 pt-3">
+                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">🚀 Free Launch Active</span>
+                      <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-black text-orange-600 dark:text-orange-400 hover:text-orange-500 transition-colors">
+                        <span>Get Started</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
               {content.cards.map((card, index) => (
                 <article
-                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/60"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/70 p-6 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-500/40 hover:shadow-2xl hover:shadow-orange-500/10"
                   key={card.title}
                 >
-                  <div className="absolute right-4 top-4 text-4xl font-black text-slate-100 transition group-hover:text-orange-100">
+                  <div className="absolute right-5 top-5 text-4xl font-black text-slate-200/80 dark:text-slate-800 transition-colors duration-300 group-hover:text-orange-500/20">
                     {String(index + 1).padStart(2, "0")}
                   </div>
                   {card.meta && (
@@ -666,8 +1004,8 @@ export default function MarketingInfo({ page }: { page: MarketingPageKey }) {
                       {card.meta}
                     </div>
                   )}
-                  <h3 className="relative max-w-[88%] text-lg font-black text-slate-950">{card.title}</h3>
-                  <p className="relative mt-3 text-sm font-semibold leading-6 text-slate-600">
+                  <h3 className="relative max-w-[88%] text-lg font-black text-slate-950 dark:text-white">{card.title}</h3>
+                  <p className="relative mt-3 text-sm font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
                     {card.description}
                   </p>
                 </article>
@@ -676,34 +1014,98 @@ export default function MarketingInfo({ page }: { page: MarketingPageKey }) {
           </div>
         </section>
 
-        <section className="border-y border-slate-200 bg-white">
-          <div className="mx-auto grid max-w-7xl gap-6 px-5 py-14 sm:px-6 lg:px-8">
-            {content.sections.map((section) => (
-              <article
-                className="grid gap-4 border-b border-slate-200 pb-6 last:border-b-0 last:pb-0 lg:grid-cols-[300px_1fr]"
-                key={section.title}
-              >
-                <h2 className="text-xl font-black text-slate-950">{section.title}</h2>
-                <div>
-                  <p className="text-base font-semibold leading-8 text-slate-600">
-                    {section.body}
-                  </p>
-                  {section.bullets && (
-                    <ul className="mt-4 grid gap-3">
-                      {section.bullets.map((bullet) => (
-                        <li className="flex gap-3 text-sm font-bold leading-6 text-slate-700" key={bullet}>
-                          <CheckCircle2 className="mt-0.5 h-5 w-5 flex-none text-orange-500" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </article>
-            ))}
+        {/* Detailed Sections Block - Next-Gen Bento Style */}
+        <section className="mx-auto max-w-7xl px-5 pt-16 sm:px-6 lg:px-8">
+          <div className="grid gap-8">
+            {content.sections.map((section, idx) => {
+              const accents = [
+                {
+                  badgeBg: "bg-[linear-gradient(135deg,#ef4444,#f97316)]",
+                  orbBg: "bg-orange-500",
+                  borderColor: "hover:border-orange-500/40",
+                  shadowGlow: "hover:shadow-orange-500/10",
+                  icon: Target,
+                  number: "01",
+                },
+                {
+                  badgeBg: "bg-[linear-gradient(135deg,#0d9488,#14b8a6)]",
+                  orbBg: "bg-teal-500",
+                  borderColor: "hover:border-teal-500/40",
+                  shadowGlow: "hover:shadow-teal-500/10",
+                  icon: Cpu,
+                  number: "02",
+                },
+                {
+                  badgeBg: "bg-[linear-gradient(135deg,#8b5cf6,#d97706)]",
+                  orbBg: "bg-amber-500",
+                  borderColor: "hover:border-amber-500/40",
+                  shadowGlow: "hover:shadow-amber-500/10",
+                  icon: Globe2,
+                  number: "03",
+                },
+              ];
+
+              const style = accents[idx % accents.length];
+              const SectionIcon = style.icon;
+
+              return (
+                <article
+                  key={section.title}
+                  className={`group relative overflow-hidden rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/70 p-8 sm:p-12 shadow-xl backdrop-blur-2xl transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl ${style.borderColor} ${style.shadowGlow}`}
+                >
+                  {/* Glowing background orb */}
+                  <div
+                    className={`absolute -right-20 -bottom-20 h-72 w-72 rounded-full ${style.orbBg} opacity-10 blur-3xl transition-all duration-700 group-hover:opacity-25 group-hover:scale-125`}
+                  />
+
+                  {/* Watermark Index Number */}
+                  <div className="absolute right-8 top-6 select-none font-black text-6xl text-slate-200/50 dark:text-slate-800/40 transition-colors duration-500 group-hover:text-orange-500/15">
+                    {style.number}
+                  </div>
+
+                  <div className="relative z-10 grid gap-8 lg:grid-cols-[280px_1fr] lg:items-start">
+                    {/* Left Header */}
+                    <div>
+                      <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${style.badgeBg} text-white shadow-lg shadow-black/10`}>
+                        <SectionIcon className="h-6 w-6" />
+                      </div>
+                      <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+                        {section.title}
+                      </h2>
+                    </div>
+
+                    {/* Right Body Content */}
+                    <div>
+                      <p className="text-base font-semibold leading-relaxed text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-relaxed">
+                        {section.body}
+                      </p>
+
+                      {section.bullets && (
+                        <div className="mt-6 grid gap-3 sm:grid-cols-1 md:grid-cols-2">
+                          {section.bullets.map((bullet) => (
+                            <div
+                              key={bullet}
+                              className="group/bullet flex items-center gap-3.5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/5 p-4 backdrop-blur-md transition-all duration-300 hover:border-teal-500/40 hover:bg-teal-500/5 hover:translate-x-1"
+                            >
+                              <div className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                                <CheckCircle2 className="h-4 w-4" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-snug">
+                                {bullet}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       </main>
+
       <Footer />
     </div>
   );

@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   LayoutDashboard,
+  MessageSquare,
   Settings,
   Sparkles,
   UsersRound,
@@ -13,6 +14,7 @@ export const navigationItems: NavItem[] = [
   { name: "Accounts", path: "/accounts", icon: UsersRound },
   { name: "Scheduler", path: "/schedule", icon: CalendarDays },
   { name: "AI Composer", path: "/ai-composer", icon: Sparkles },
+  { name: "Inbox & Auto-DM", path: "/inbox", icon: MessageSquare },
   { name: "Settings", path: "/settings", icon: Settings },
 ];
 
@@ -32,6 +34,10 @@ export const pageMeta: Record<string, { title: string; eyebrow: string }> = {
   "/ai-composer": {
     title: "AI Composer",
     eyebrow: "Generate polished content and send it straight to the queue.",
+  },
+  "/inbox": {
+    title: "Social Inbox & Auto-DM",
+    eyebrow: "Unified inbox, AI quick replies, and keyword auto-DM triggers.",
   },
   "/settings": {
     title: "Settings",

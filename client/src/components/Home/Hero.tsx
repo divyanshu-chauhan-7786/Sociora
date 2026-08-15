@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { X } from "lucide-react";
+import { motion, type Variants } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 
@@ -56,18 +55,18 @@ export const PinterestIcon = () => (
 
 // ─── Social Card data ─────────────────────────────────────────────────────────
 const socialPlatforms = [
-  { name: "Instagram", icon: InstagramIcon, color: "#E1306C", bg: "rgba(225,48,108,0.12)", followers: "24.3K", stat: "+12%" },
-  { name: "Facebook", icon: FacebookIcon, color: "#1877F2", bg: "rgba(24,119,242,0.12)", followers: "18.7K", stat: "+8%" },
-  { name: "LinkedIn", icon: LinkedInIcon, color: "#0A66C2", bg: "rgba(10,102,194,0.12)", followers: "9.1K", stat: "+21%" },
-  { name: "X / Twitter", icon: TwitterIcon, color: "#000000", bg: "rgba(0,0,0,0.1)", followers: "31.2K", stat: "+5%" },
+  { name: "Instagram", icon: InstagramIcon, color: "#b5527a", followers: "24.3K", badge: "+14% engagement" },
+  { name: "LinkedIn", icon: LinkedInIcon, color: "#3a6fa8", followers: "9.1K", badge: "Post Scheduled • 4 PM" },
+  { name: "Facebook", icon: FacebookIcon, color: "#3a72c4", followers: "18.7K", badge: "Live Sync Active" },
+  { name: "X / Twitter", icon: TwitterIcon, color: "#4a4a4a", followers: "31.2K", badge: "AI Draft Ready" },
 ];
 
 // Positions for floating cards (desktop, relative to hero center)
 const cardPositions = [
-  { top: "20%",  left: "10%",  delay: 0,    duration: 5.2 },
-  { top: "60%",  left: "8%",   delay: 0.8,  duration: 6.1 },
-  { top: "25%", right: "10%", delay: 1.2,  duration: 5.5 },
-  { top: "65%", right: "8%",  delay: 2.0,  duration: 6.3 },
+  { top: "22%",  left: "8%",   delay: 0,    duration: 5.2 },
+  { top: "62%",  left: "8%",   delay: 0.8,  duration: 6.1 },
+  { top: "22%", right: "8%",   delay: 1.2,  duration: 5.5 },
+  { top: "62%", right: "8%",   delay: 2.0,  duration: 6.3 },
 ];
 
 // ─── FloatingCard ─────────────────────────────────────────────────────────────
@@ -84,53 +83,31 @@ function FloatingCard({
   const { delay, duration, ...styleProps } = position;
   return (
     <motion.div
-      className="absolute hidden h-12 w-12 cursor-default select-none items-center justify-center rounded-2xl border border-white/40 lg:flex"
+      className="absolute hidden cursor-default select-none items-center justify-center lg:flex"
       style={{
         ...styleProps,
-        background: "rgba(255,255,255,0.65)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset",
         zIndex: 10,
+        color: platform.color,
+        opacity: 0.55,
       }}
       initial={{ opacity: 0, y: 20, scale: 0.9 }}
       animate={{
         opacity: 1,
-        y: [0, -15, 5, -10, 0],
-        x: [0, 8, -8, 6, 0],
+        y: [0, -14, 6, -10, 0],
+        x: [0, 6, -6, 4, 0],
         scale: 1,
-        rotate: [0, 2, -2, 1, 0],
+        rotate: [0, 1.5, -1.5, 0.5, 0],
       }}
       transition={{
-        opacity: { delay: 1 + index * 0.12, duration: 0.5 },
-        scale:   { delay: 1 + index * 0.12, duration: 0.5 },
-        y: {
-          delay: delay,
-          duration: duration,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
-        x: {
-          delay: delay + 0.3,
-          duration: duration + 1.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
-        rotate: {
-          delay: delay + 0.5,
-          duration: duration + 2,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
+        opacity: { delay: 0.5 + index * 0.12, duration: 0.5 },
+        scale:   { delay: 0.5 + index * 0.12, duration: 0.5 },
+        y: { delay: delay, duration: duration, repeat: Infinity, ease: "easeInOut" },
+        x: { delay: delay + 0.3, duration: duration + 1.5, repeat: Infinity, ease: "easeInOut" },
+        rotate: { delay: delay + 0.5, duration: duration + 2, repeat: Infinity, ease: "easeInOut" },
       }}
-      whileHover={{ scale: 1.15, boxShadow: "0 16px 48px rgba(0,0,0,0.2)" }}
+      whileHover={{ scale: 1.15, y: -5 }}
     >
-      <div
-        className="flex h-6 w-6 items-center justify-center"
-        style={{ color: platform.color }}
-      >
-        <Icon />
-      </div>
+      <Icon />
     </motion.div>
   );
 }
@@ -220,7 +197,6 @@ function Ticker() {
 
 // ─── Main Hero ─────────────────────────────────────────────────────────────────
 export default function SocioraHero() {
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const { user } = useAuth();
   const primaryLink = user ? "/dashboard" : "/login";
   const primaryLabel = user ? "Schedule your post" : "Get started free";
@@ -238,8 +214,8 @@ export default function SocioraHero() {
 
   return (
     <section
-      className="relative flex min-h-screen flex-col justify-center overflow-hidden"
-      style={{ background: "#F8FAFC", fontFamily: "'DM Sans', 'Figtree', 'Plus Jakarta Sans', system-ui, sans-serif" }}
+      className="relative flex min-h-[90vh] flex-col justify-center overflow-hidden bg-transparent"
+      style={{ fontFamily: "'DM Sans', 'Figtree', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* Load fonts */}
       <style>{`
@@ -293,56 +269,48 @@ export default function SocioraHero() {
       ))}
 
       {/* ── Main content ── */}
-      <div className="relative z-20 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-14 pt-28 text-center sm:px-6 sm:pb-16 sm:pt-24">
+      <div className="relative z-20 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-14 pt-24 text-center sm:px-6 sm:pb-16 sm:pt-28">
         <motion.div
           variants={stagger.container}
           initial="initial"
           animate="animate"
           className="flex flex-col items-center w-full"
         >
+          {/* Top Badge */}
+          <motion.div
+            variants={stagger.item}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-teal-700 backdrop-blur-md dark:border-teal-400/30 dark:text-teal-300"
+          >
+            <Sparkles className="size-4 text-teal-600 dark:text-teal-400 animate-pulse" />
+            <span>Next-Gen Social Command Center</span>
+          </motion.div>
+
           {/* Headline */}
           <motion.h1
             variants={stagger.item}
-            className="mb-5 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:mb-6 sm:text-6xl md:text-7xl lg:text-[82px]"
+            className="mb-6 text-4xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-6xl md:text-7xl lg:text-[84px] dark:text-white"
           >
-            <span className="block">Sociora</span>
-            <span className="grad-text block lg:inline">runs your content calendar.</span>
+            <span className="block">Sociora runs your</span>
+            <span className="grad-text block lg:inline">content calendar on autopilot.</span>
           </motion.h1>
 
           {/* Subheadline */}
           <motion.p
             variants={stagger.item}
-            className="mb-8 max-w-[700px] text-base font-medium leading-7 text-slate-500 sm:mb-10 sm:text-xl sm:leading-relaxed"
+            className="mb-8 max-w-[720px] text-base font-medium leading-7 text-slate-600 sm:mb-10 sm:text-xl sm:leading-relaxed dark:text-slate-300"
           >
             Create AI-powered content, schedule across every platform, and manage your entire social workflow from one intelligent workspace.
           </motion.p>
 
           {/* CTA */}
-          <motion.div variants={stagger.item} className="mb-4 w-full max-w-sm sm:max-w-md">
+          <motion.div variants={stagger.item} className="mb-10 w-full max-w-sm sm:mb-12 sm:max-w-md">
             <Link
               to={primaryLink}
-              className="btn-primary inline-flex items-center justify-center w-full rounded-2xl px-6 py-3.5 text-sm font-bold text-white no-underline"
+              className="btn-primary group inline-flex items-center justify-center gap-2.5 w-full rounded-2xl px-7 py-4 text-base font-extrabold text-white no-underline shadow-lg shadow-orange-500/25"
             >
-              {primaryLabel}
+              <span>{primaryLabel}</span>
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
-          </motion.div>
-
-          {/* Secondary CTA */}
-          <motion.div variants={stagger.item} className="mb-10 flex w-full items-center justify-center sm:mb-14 sm:gap-4">
-            <button
-              className="btn-secondary inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-5 py-2.5 text-sm font-bold text-slate-600 backdrop-blur"
-              type="button"
-              aria-label="Watch demo video"
-              onClick={() => setIsVideoModalOpen(true)}
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100">
-                <svg className="w-3 h-3 text-slate-600 translate-x-0.5" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M5.5 3.5l7 4.5-7 4.5V3.5z"/>
-                </svg>
-              </span>
-              Watch demo
-            </button>
-            <span className="hidden text-xs font-semibold text-slate-400 sm:inline">No credit card required</span>
           </motion.div>
 
           {/* Ticker */}
@@ -350,8 +318,27 @@ export default function SocioraHero() {
             <Ticker />
           </motion.div>
 
+          {/* Stats Row */}
+          <motion.div 
+            variants={stagger.item} 
+            className="mt-10 flex flex-wrap items-center justify-center gap-6 sm:gap-10 border-t border-slate-200/60 pt-8 dark:border-slate-800/60"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">10x Faster Scheduling</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">AI-Powered Captions</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">Unified Multi-Account Sync</span>
+            </div>
+          </motion.div>
+
           {/* Mobile social icons row */}
-          <motion.div variants={stagger.item} className="mt-10 flex lg:hidden flex-wrap justify-center gap-2">
+          <motion.div variants={stagger.item} className="mt-8 flex lg:hidden flex-wrap justify-center gap-2">
             {socialPlatforms.map((p) => {
               const Icon = p.icon;
               return (
@@ -371,46 +358,6 @@ export default function SocioraHero() {
         </motion.div>
       </div>
 
-      {/* ── Video Modal ── */}
-      <AnimatePresence>
-        {isVideoModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md"
-            onClick={() => setIsVideoModalOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-white/10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between border-b border-slate-800 p-4">
-                <h3 className="text-sm font-bold text-slate-200">Sociora Demo</h3>
-                <button
-                  className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
-                  onClick={() => setIsVideoModalOpen(false)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="relative aspect-video w-full bg-slate-950">
-                <iframe
-                  className="absolute inset-0 h-full w-full border-0"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Demo Video"
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }

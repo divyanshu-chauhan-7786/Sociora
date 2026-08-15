@@ -25,6 +25,31 @@ export interface DashboardResponse {
     failed: number;
     publishingHealth: number;
   };
+  analytics?: {
+    totalReach: string;
+    reachGrowth: string;
+    hoursSaved: string;
+    postsPerWeek?: string;
+    weeklyBars?: Array<{
+      day: string;
+      count: number;
+      height: string;
+      active: boolean;
+    }>;
+    platformShare: {
+      instagram: number;
+      linkedin: number;
+      facebook: number;
+      twitter: number;
+    };
+    channelStatuses: Array<{
+      platform: string;
+      name: string;
+      status: string;
+      isHealthy: boolean;
+      handle: string;
+    }>;
+  };
   upcomingPosts: ScheduledPost[];
   activities: ActivityItem[];
 }
@@ -137,6 +162,7 @@ export const authApi = {
 
 export const dashboardApi = {
   get: () => request<DashboardResponse>("/dashboard"),
+  clearActivity: () => request<void>("/dashboard/activity", { method: "DELETE" }),
 };
 
 export const realtimeApi = {
@@ -186,8 +212,71 @@ export const generationApi = {
   list: () => request<Generation[]>("/generations"),
   create: (payload: { prompt: string; tone: Tone; generateImage: boolean }) =>
     request<Generation>("/generations", { method: "POST", body: JSON.stringify(payload) }),
+  update: (id: string, payload: { prompt?: string; content?: string; tone?: Tone }) =>
+    request<Generation>(`/generations/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+  delete: (id: string) => request<void>(`/generations/${id}`, { method: "DELETE" }),
   suggestHashtags: (payload: { content: string; platforms: PlatformId[] }) =>
     request<{ hashtags: string[] }>("/generations/hashtags", { method: "POST", body: JSON.stringify(payload) }),
+};
+
+export interface InboxStreamItem {
+  id: string;
+  platform: PlatformId;
+  senderName: string;
+  senderAvatar?: string;
+  content: string;
+  postTitle?: string;
+  postMediaUrl?: string;
+  createdAt: string;
+  isRead: boolean;
+  likesCount: number;
+  repliesCount: number;
+  isLiked?: boolean;
+  isAutomated?: boolean;
+  matchedKeyword?: string;
+  autoReplyText?: string;
+  autoDmText?: string;
+  accountName?: string;
+}
+
+export interface CommentAutomationRule {
+  _id?: string;
+  id?: string;
+  name: string;
+  platform: "instagram" | "facebook" | "all";
+  keyword: string;
+  replyText: string;
+  dmText: string;
+  isActive: boolean;
+  triggerCount?: number;
+  createdAt?: string;
+}
+
+export const inboxApi = {
+  stream: (platform?: PlatformId | "all", filter?: "all" | "unread") => {
+    const params = new URLSearchParams();
+    if (platform && platform !== "all") params.set("platform", platform);
+    if (filter && filter !== "all") params.set("filter", filter);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return request<{ items: InboxStreamItem[]; total: number }>(`/inbox/stream${query}`);
+  },
+  reply: (payload: { id: string; platform: PlatformId; message: string; isDm?: boolean }) =>
+    request<{ success: boolean; reply: any }>("/inbox/reply", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  action: (payload: { id: string; action: "like" | "hide" | "delete" }) =>
+    request<{ success: boolean; id: string; action: string }>("/inbox/action", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getRules: () => request<CommentAutomationRule[]>("/inbox/automations"),
+  createRule: (rule: Omit<CommentAutomationRule, "_id" | "id" | "createdAt" | "triggerCount">) =>
+    request<CommentAutomationRule>("/inbox/automations", {
+      method: "POST",
+      body: JSON.stringify(rule),
+    }),
+  deleteRule: (id: string) => request<void>(`/inbox/automations/${id}`, { method: "DELETE" }),
 };
 
 export const settingsApi = {
@@ -200,3 +289,4 @@ export const settingsApi = {
       body: JSON.stringify({ imageData }),
     }),
 };
+

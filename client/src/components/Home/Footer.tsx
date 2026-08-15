@@ -1,5 +1,5 @@
 import { motion, type Variants } from "framer-motion";
-import { Mail, MapPin, Phone, Sparkles } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const footerLinks = {
@@ -143,10 +143,6 @@ export default function Footer() {
                   </Link>
                 );
               })}
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-400 shadow-sm backdrop-blur-sm">
-              <Sparkles className="size-3" />
-              Ready to publish smarter?
             </div>
           </motion.div>
 

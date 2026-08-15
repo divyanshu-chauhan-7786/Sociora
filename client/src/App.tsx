@@ -3,6 +3,8 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 
 import { useAuth } from "./hooks/useAuth";
 
+import AnimatedBackground from "./components/AnimatedBackground";
+
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const Layout = lazy(() => import("./components/Layout"));
@@ -11,6 +13,7 @@ const Scheduler = lazy(() => import("./pages/Scheduler"));
 const Accounts = lazy(() => import("./pages/Accounts"));
 const Aicomposer = lazy(() => import("./pages/Aicomposer"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Inbox = lazy(() => import("./pages/Inbox"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 const MarketingInfo = lazy(() => import("./pages/MarketingInfo"));
 
@@ -42,31 +45,36 @@ const NotFoundRedirect = () => {
 
 export default function App() {
     return (
-        <Suspense fallback={<PageLoader />}>
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/about" element={<MarketingInfo page="about" />} />
-                <Route path="/blog" element={<MarketingInfo page="blog" />} />
-                <Route path="/careers" element={<MarketingInfo page="careers" />} />
-                <Route path="/contact" element={<MarketingInfo page="contact" />} />
-                <Route path="/privacy" element={<MarketingInfo page="privacy" />} />
-                <Route path="/terms" element={<MarketingInfo page="terms" />} />
-                <Route path="/security" element={<MarketingInfo page="security" />} />
-                <Route path="/cookies" element={<MarketingInfo page="cookies" />} />
-                <Route path="/oauth/callback" element={<OAuthCallback />} />
-                <Route element={<ProtectedRoute />}>
-                    <Route element={<Layout />} >
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/accounts" element={<Accounts />} />
-                        <Route path="/schedule" element={<Scheduler />} />
-                        <Route path="/ai-composer" element={<Aicomposer />} />
-                        <Route path="/settings" element={<Settings />} />
+        <div className="relative min-h-screen">
+            <AnimatedBackground />
+            <Suspense fallback={<PageLoader />}>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/about" element={<MarketingInfo page="about" />} />
+                    <Route path="/blog" element={<MarketingInfo page="blog" />} />
+                    <Route path="/careers" element={<MarketingInfo page="careers" />} />
+                    <Route path="/contact" element={<MarketingInfo page="contact" />} />
+                    <Route path="/privacy" element={<MarketingInfo page="privacy" />} />
+                    <Route path="/terms" element={<MarketingInfo page="terms" />} />
+                    <Route path="/security" element={<MarketingInfo page="security" />} />
+                    <Route path="/cookies" element={<MarketingInfo page="cookies" />} />
+                    <Route path="/oauth/callback" element={<OAuthCallback />} />
+                    <Route element={<ProtectedRoute />}>
+                        <Route element={<Layout />} >
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/accounts" element={<Accounts />} />
+                            <Route path="/schedule" element={<Scheduler />} />
+                            <Route path="/scheduler" element={<Scheduler />} />
+                            <Route path="/ai-composer" element={<Aicomposer />} />
+                            <Route path="/aicomposer" element={<Aicomposer />} />
+                            <Route path="/inbox" element={<Inbox />} />
+                            <Route path="/settings" element={<Settings />} />
+                        </Route>
                     </Route>
-                </Route>
-                <Route path="*" element={<NotFoundRedirect />} />
-
-            </Routes>
-        </Suspense>
+                    <Route path="*" element={<NotFoundRedirect />} />
+                </Routes>
+            </Suspense>
+        </div>
     );
 }

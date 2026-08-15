@@ -27,17 +27,17 @@ export default function CTA() {
   const primaryLabel = user ? "Schedule your post" : "Get started free";
 
   return (
-    <section className="relative bg-white py-24 z-20">
+    <section className="relative bg-transparent py-24 z-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 relative">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="group relative overflow-hidden rounded-[2rem] border border-slate-800 p-8 text-white shadow-2xl shadow-slate-900/20 sm:p-12 lg:p-16 transition-colors duration-500 hover:border-teal-500/30"
+          className="group relative overflow-hidden rounded-[2.5rem] border border-white/20 bg-slate-950/80 p-8 text-white shadow-2xl backdrop-blur-2xl sm:p-12 lg:p-16 transition-colors duration-500 hover:border-teal-400/40"
         >
           {/* Background Gradients & Glows */}
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_56%,#134e4a_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.85)_0%,rgba(30,41,59,0.80)_56%,rgba(19,78,74,0.75)_100%)] backdrop-blur-xl" />
           <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-teal-500/20 blur-[100px] transition-all duration-700 group-hover:bg-teal-500/30 group-hover:blur-[120px]" />
           <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-orange-500/10 blur-[100px] transition-all duration-700 group-hover:bg-orange-500/20" />
 
@@ -75,9 +75,6 @@ export default function CTA() {
                   Compare plans
                 </a>
               </motion.div>
-              <p className="mt-1 text-center text-sm font-bold text-slate-400">
-                No credit card required
-              </p>
             </motion.div>
           </div>
         </motion.div>

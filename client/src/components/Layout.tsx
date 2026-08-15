@@ -33,7 +33,7 @@ const Layout = () => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="min-h-screen bg-[#f8fafc] text-slate-950 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-50"
+      className="min-h-screen bg-slate-50/40 text-slate-950 transition-colors duration-300 dark:bg-slate-950/60 dark:text-slate-50 backdrop-blur-[2px]"
     >
       <div className="flex min-h-screen">
         <Sidebar

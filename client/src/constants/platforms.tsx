@@ -3,7 +3,7 @@ import { SiFacebook, SiInstagram, SiX, SiYoutube } from "@icons-pack/react-simpl
 import { LinkedInIcon } from "../components/icons/LinkedInIcon";
 import type { Platform, PlatformId } from "../types";
 
-export const FREE_PLATFORM_IDS: PlatformId[] = ["instagram", "linkedin"];
+export const FREE_PLATFORM_IDS: PlatformId[] = ["instagram", "linkedin", "facebook", "twitter", "youtube"];
 
 export const PLATFORMS: Platform[] = [
   {
@@ -11,23 +11,11 @@ export const PLATFORMS: Platform[] = [
     name: "Instagram",
     shortName: "IG",
     icon: SiInstagram,
-    description: "Plan reels, posts, stories, and visual campaigns.",
+    description: "Plan reels, posts, stories, and visual campaigns via Zernio OAuth.",
     colorClass: "text-coral-700",
     bgClass: "bg-coral-50",
     access: "free",
-    planLabel: "Free",
-  },
-  {
-    id: "facebook",
-    name: "Facebook",
-    shortName: "FB",
-    icon: SiFacebook,
-    description: "Manage page content, announcements, and campaigns.",
-    colorClass: "text-teal-700",
-    bgClass: "bg-teal-50",
-    access: "upcoming",
-    planLabel: "Upcoming",
-    lockedDescription: "Facebook publishing will unlock with paid plans in Sociora 2.0.",
+    planLabel: "Active",
   },
   {
     id: "linkedin",
@@ -38,7 +26,18 @@ export const PLATFORMS: Platform[] = [
     colorClass: "text-slate-700",
     bgClass: "bg-slate-100",
     access: "free",
-    planLabel: "Free",
+    planLabel: "Active",
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    shortName: "FB",
+    icon: SiFacebook,
+    description: "Manage page content, announcements, and campaigns.",
+    colorClass: "text-teal-700",
+    bgClass: "bg-teal-50",
+    access: "free",
+    planLabel: "Active",
   },
   {
     id: "twitter",
@@ -48,9 +47,8 @@ export const PLATFORMS: Platform[] = [
     description: "Schedule concise posts, launches, and quick thoughts.",
     colorClass: "text-slate-950",
     bgClass: "bg-slate-100",
-    access: "upcoming",
-    planLabel: "Upcoming",
-    lockedDescription: "Twitter / X publishing will unlock with paid plans in Sociora 2.0.",
+    access: "free",
+    planLabel: "Active",
   },
   {
     id: "youtube",
@@ -58,19 +56,16 @@ export const PLATFORMS: Platform[] = [
     shortName: "YT",
     icon: SiYoutube,
     description: "Promote videos, shorts, and channel updates.",
-    colorClass: "text-amber-700",
-    bgClass: "bg-amber-50",
-    access: "upcoming",
-    planLabel: "Upcoming",
-    lockedDescription: "YouTube publishing will unlock with paid plans in Sociora 2.0.",
+    colorClass: "text-red-700",
+    bgClass: "bg-red-50",
+    access: "free",
+    planLabel: "Active",
   },
 ];
 
 export const getPlatform = (platformId: Platform["id"]) =>
   PLATFORMS.find((platform) => platform.id === platformId);
 
-export const isPlatformActive = (platformId: PlatformId) =>
-  FREE_PLATFORM_IDS.includes(platformId);
+export const isPlatformActive = (_platformId: PlatformId) => true;
 
-export const getActivePlatforms = () =>
-  PLATFORMS.filter((platform) => isPlatformActive(platform.id));
+export const getActivePlatforms = () => PLATFORMS;

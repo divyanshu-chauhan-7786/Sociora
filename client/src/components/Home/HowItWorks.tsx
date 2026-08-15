@@ -72,7 +72,7 @@ const itemVariants: Variants = {
 
 export default function HowItWorks() {
   return (
-    <section className="relative overflow-hidden bg-white py-24" id="how-it-works">
+    <section className="relative overflow-hidden bg-transparent py-24" id="how-it-works">
       <GridBackground />
 
       <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
@@ -84,25 +84,25 @@ export default function HowItWorks() {
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-black uppercase text-teal-700"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-teal-700 backdrop-blur-md dark:border-teal-400/30 dark:text-teal-300"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <CheckCircle2 className="size-4" />
-            Workflow
+            <CheckCircle2 className="size-4 text-teal-600 dark:text-teal-400" />
+            3-Step Workflow
           </motion.div>
-          <h2 className="max-w-2xl text-4xl font-black leading-snug text-slate-950 sm:text-5xl">
+          <h2 className="max-w-2xl text-4xl font-black leading-snug text-slate-950 dark:text-white sm:text-5xl">
             A clean operating flow for every campaign.
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base font-semibold leading-7 text-slate-500">
+          <p className="mx-auto mt-6 max-w-2xl text-base font-semibold leading-7 text-slate-600 dark:text-slate-300">
             Sociora keeps account setup, AI drafting, and scheduling in a tight workspace built for daily content operations.
           </p>
         </motion.div>
 
         <motion.div
-          className="grid gap-5 lg:grid-cols-3"
+          className="grid gap-6 lg:grid-cols-3"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -115,7 +115,7 @@ export default function HowItWorks() {
               <motion.article
                 key={item.step}
                 variants={itemVariants}
-                className="group relative flex min-h-[340px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 sm:p-7"
+                className="group relative flex min-h-[340px] flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white/70 p-7 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-slate-900/70 sm:p-8"
                 whileHover={{
                   y: -6,
                   boxShadow: "0 20px 35px rgba(15,23,42,0.08)",

@@ -6,6 +6,8 @@ import { presentGeneration } from "../utils/presenters.js";
 import { recordActivity } from "../utils/activity.js";
 import { broadcastWorkspaceChanged } from "../utils/realtime.js";
 
+const toneValues = ["Professional", "Casual", "Friendly", "Bold", "Inspirational", "Witty"] as const;
+
 export const listGenerations = async (req: Request | any, res: Response): Promise<void> => {
   const generations = await Generation.find({ user: req.user._id }).sort({ createdAt: -1 });
   res.json(generations.map(presentGeneration));
@@ -47,6 +49,85 @@ export const createGeneration = async (req: Request | any, res: Response): Promi
   broadcastWorkspaceChanged(req.user._id.toString(), { generationId: generation._id.toString(), status: "generated" });
 
   res.status(201).json(presentGeneration(generation));
+};
+
+export const updateGeneration = async (req: Request | any, res: Response): Promise<void> => {
+  const { prompt, content, tone } = req.body;
+  const updates: Record<string, string> = {};
+
+  if (prompt !== undefined) {
+    if (!String(prompt).trim()) {
+      res.status(400).json({ message: "Prompt cannot be empty" });
+      return;
+    }
+
+    updates.prompt = String(prompt).trim();
+  }
+
+  if (content !== undefined) {
+    if (!String(content).trim()) {
+      res.status(400).json({ message: "Generated content cannot be empty" });
+      return;
+    }
+
+    updates.content = String(content).trim();
+  }
+
+  if (tone !== undefined) {
+    if (!toneValues.includes(tone)) {
+      res.status(400).json({ message: "Unsupported tone" });
+      return;
+    }
+
+    updates.tone = tone;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ message: "No generation updates provided" });
+    return;
+  }
+
+  const generation = await Generation.findOneAndUpdate(
+    { _id: req.params.id, user: req.user._id },
+    { $set: updates },
+    { new: true, runValidators: true },
+  );
+
+  if (!generation) {
+    res.status(404).json({ message: "Generated content not found" });
+    return;
+  }
+
+  await recordActivity({
+    user: req.user._id.toString(),
+    type: "generated",
+    title: "AI draft edited",
+    description: "Updated a generated draft from AI Composer.",
+  });
+
+  broadcastWorkspaceChanged(req.user._id.toString(), { generationId: generation._id.toString(), status: "updated" });
+
+  res.json(presentGeneration(generation));
+};
+
+export const deleteGeneration = async (req: Request | any, res: Response): Promise<void> => {
+  const generation = await Generation.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+
+  if (!generation) {
+    res.status(404).json({ message: "Generated content not found" });
+    return;
+  }
+
+  await recordActivity({
+    user: req.user._id.toString(),
+    type: "generated",
+    title: "AI draft deleted",
+    description: "Removed a generated draft from AI Composer.",
+  });
+
+  broadcastWorkspaceChanged(req.user._id.toString(), { generationId: generation._id.toString(), status: "deleted" });
+
+  res.status(204).send();
 };
 
 export const suggestHashtags = async (req: Request | any, res: Response): Promise<void> => {

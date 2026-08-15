@@ -10,6 +10,7 @@ import postRoutes from "./routes/postRoutes.js";
 import realtimeRoutes from "./routes/realtimeRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import socialAuthRoutes from "./routes/socialAuthRoutes.js";
+import inboxRoutes from "./routes/inboxRoutes.js";
 import { startPostPublisher } from "./services/postPublisher.js";
 
 
@@ -62,6 +63,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/generations', generationRoutes);
+app.use('/api/inbox', inboxRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/realtime', realtimeRoutes);
 app.use('/api/settings', settingsRoutes);
