@@ -50,6 +50,7 @@ export interface SocialAccount {
     hasAnalyticsAccess?: boolean;
   };
   lastSyncedAt: string;
+  createdAt?: string;
 }
 
 export interface PlatformPost {

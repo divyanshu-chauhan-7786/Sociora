@@ -1,4 +1,4 @@
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -13,7 +13,7 @@ const navItems = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const primaryLink = user ? "/dashboard" : "/login";
   const primaryLabel = user ? "Schedule your post" : "Launch app";
 
@@ -68,13 +68,23 @@ export default function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          {!user && (
+          {!user ? (
             <Link
               className="text-sm font-bold text-slate-400 transition hover:text-white"
               to="/login"
             >
               Sign in
             </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={logout}
+              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-700/80 bg-slate-900/80 px-3.5 text-xs font-bold text-slate-300 transition-all duration-200 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400"
+              title="Log out of your account"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Logout</span>
+            </button>
           )}
           <Link
             className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] px-4 text-sm font-black text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/30"
@@ -109,8 +119,8 @@ export default function Navbar() {
               </a>
             ))}
           </div>
-          <div className={`mt-3 grid gap-2 border-t border-slate-800 pt-3 ${user ? "grid-cols-1" : "grid-cols-2"}`}>
-            {!user && (
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-800 pt-3">
+            {!user ? (
               <Link
                 className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 text-sm font-black text-slate-300 hover:bg-slate-900 hover:text-white"
                 onClick={() => setIsOpen(false)}
@@ -118,6 +128,18 @@ export default function Navbar() {
               >
                 Sign in
               </Link>
+            ) : (
+              <button
+                type="button"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-black text-red-400 hover:bg-red-500/20"
+                onClick={() => {
+                  setIsOpen(false);
+                  logout();
+                }}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
             )}
             <Link
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#ef4444,#f97316)] text-sm font-black text-white"

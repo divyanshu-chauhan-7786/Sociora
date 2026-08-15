@@ -9,7 +9,7 @@ import Footer from "../components/Home/Footer";
 
 export default function Landing() {
     return (
-        <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900">
+        <div className="min-h-screen bg-transparent font-sans text-slate-900">
             <Navbar />
             <Hero />
             <Features />

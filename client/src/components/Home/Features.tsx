@@ -6,7 +6,7 @@ import {
   Layers3,
   MessageSquareText,
   ShieldCheck,
-} from "lucide-react";
+} from "lucide-react"; 
 
 // Import local assets
 import imgUnifiedQueue from "../../assets/PublishingQueue.png"; 
@@ -139,7 +139,7 @@ const itemVariants: Variants = {
 
 export default function Features() {
   return (
-    <section className="relative overflow-hidden bg-white py-16 sm:py-24" id="features">
+    <section className="relative overflow-hidden bg-transparent py-16 sm:py-24" id="features">
       <GridBackground />
 
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 relative z-10">
@@ -151,19 +151,19 @@ export default function Features() {
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="mb-5 inline-flex items-center gap-2 rounded-full border border-coral-200 bg-coral-50 px-4 py-2 text-sm font-black uppercase text-coral-700 sm:mb-6"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-teal-700 backdrop-blur-md dark:border-teal-400/30 dark:text-teal-300"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Layers3 className="size-4" />
+            <Layers3 className="size-4 text-teal-600 dark:text-teal-400" />
             Core features
           </motion.div>
-          <h2 className="max-w-2xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl sm:leading-snug">
+          <h2 className="max-w-2xl text-3xl font-black leading-tight text-slate-950 dark:text-white sm:text-5xl sm:leading-snug">
             A fast, focused workspace for modern teams.
           </h2>
-          <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-500 sm:mt-6 sm:text-base sm:leading-7">
+          <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300 sm:mt-6 sm:text-base sm:leading-7">
             Sociora brings planning, AI writing, scheduling, and account visibility into a responsive interface built for repeat daily use.
           </p>
         </motion.div>
@@ -182,7 +182,7 @@ export default function Features() {
               <motion.article
                 key={feature.title}
                 variants={itemVariants}
-                className={`group relative flex min-h-[330px] flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-200/40 backdrop-blur-xl sm:min-h-[480px] sm:rounded-[2.5rem] sm:shadow-xl ${feature.className || ""}`}
+                className={`group relative flex min-h-[330px] flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white/70 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-white/10 dark:bg-slate-900/70 sm:min-h-[460px] ${feature.className || ""}`}
                 whileHover={{
                   y: -10,
                   scale: 1.01,

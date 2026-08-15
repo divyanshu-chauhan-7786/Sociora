@@ -5,7 +5,8 @@ type RealtimeEventName =
   | "posts:changed"
   | "dashboard:changed"
   | "activity:changed"
-  | "settings:changed";
+  | "settings:changed"
+  | "inbox:changed";
 
 type Client = {
   id: string;
@@ -55,8 +56,13 @@ export const broadcastToUser = (userId: string, event: RealtimeEventName, data: 
   }
 };
 
+export const broadcastInboxChanged = (userId: string, data: unknown = {}) => {
+  broadcastToUser(userId, "inbox:changed", data);
+};
+
 export const broadcastWorkspaceChanged = (userId: string, data: unknown = {}) => {
   broadcastToUser(userId, "posts:changed", data);
   broadcastToUser(userId, "dashboard:changed", data);
   broadcastToUser(userId, "activity:changed", data);
+  broadcastToUser(userId, "inbox:changed", data);
 };
